@@ -1,0 +1,238 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:padding="16dp"
+    tools:context=".MainActivity">
+
+    <TextView
+        android:id="@+id/titleTextView"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="BYD DG-LAB 集成控制"
+        android:textSize="24sp"
+        android:textStyle="bold"
+        android:gravity="center"
+        android:layout_marginBottom="16dp" />
+
+    <!-- WebSocket地址配置区域 -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:layout_marginBottom="16dp"
+        android:padding="12dp">
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="服务器地址配置"
+            android:textSize="14sp"
+            android:textStyle="bold"
+            android:layout_marginBottom="8dp" />
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:layout_marginBottom="8dp">
+
+            <EditText
+                android:id="@+id/serverUrlEditText"
+                android:layout_width="0dp"
+                android:layout_height="40dp"
+                android:layout_weight="1"
+                android:hint="输入WebSocket地址"
+                android:inputType="textUri"
+                android:padding="8dp"
+                android:textSize="12sp"
+                android:layout_marginEnd="8dp" />
+
+            <Button
+                android:id="@+id/scanQrButton"
+                android:layout_width="wrap_content"
+                android:layout_height="40dp"
+                android:text="扫码"
+                android:textSize="12sp"
+                android:paddingHorizontal="12dp" />
+        </LinearLayout>
+
+        <Button
+            android:id="@+id/applyUrlButton"
+            android:layout_width="match_parent"
+            android:layout_height="36dp"
+            android:text="应用地址"
+            android:textSize="12sp" />
+    </LinearLayout>
+
+    <!-- 车速数据源选择区域 -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:layout_marginBottom="16dp"
+        android:padding="12dp">
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="车速数据源选择"
+            android:textSize="14sp"
+            android:textStyle="bold"
+            android:layout_marginBottom="8dp" />
+
+        <RadioGroup
+            android:id="@+id/dataSourceRadioGroup"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical">
+
+            <RadioButton
+                android:id="@+id/gpsOnlyRadio"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="仅使用 GPS"
+                android:textSize="14sp" />
+
+            <RadioButton
+                android:id="@+id/bydAutoRadio"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="优先 BYD，GPS 备用"
+                android:textSize="14sp" />
+
+            <RadioButton
+                android:id="@+id/bydOnlyRadio"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="仅使用 BYD 车机"
+                android:textSize="14sp" />
+        </RadioGroup>
+
+        <TextView
+            android:id="@+id/dataSourceStatusTextView"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="当前数据源: GPS"
+            android:textSize="12sp"
+            android:layout_marginTop="8dp"
+            android:alpha="0.8" />
+    </LinearLayout>
+
+    <!-- 车速、强度、频率显示区域 -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:layout_marginBottom="16dp">
+
+        <TextView
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:text="当前车速:"
+            android:textSize="18sp" />
+
+        <TextView
+            android:id="@+id/speedTextView"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:text="0 km/h"
+            android:textSize="18sp"
+            android:textStyle="bold"
+            android:gravity="end" />
+    </LinearLayout>
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:layout_marginBottom="16dp">
+
+        <TextView
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:text="强度:"
+            android:textSize="18sp" />
+
+        <TextView
+            android:id="@+id/intensityTextView"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:text="0"
+            android:textSize="18sp"
+            android:textStyle="bold"
+            android:gravity="end" />
+    </LinearLayout>
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:layout_marginBottom="16dp">
+
+        <TextView
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:text="频率:"
+            android:textSize="18sp" />
+
+        <TextView
+            android:id="@+id/frequencyTextView"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:text="10 Hz"
+            android:textSize="18sp"
+            android:textStyle="bold"
+            android:gravity="end" />
+    </LinearLayout>
+
+    <!-- 连接/断开按钮 -->
+    <Button
+        android:id="@+id/connectButton"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="连接到DG-LAB"
+        android:layout_marginBottom="8dp" />
+
+    <Button
+        android:id="@+id/disconnectButton"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="断开连接"
+        android:layout_marginBottom="16dp" />
+
+    <!-- 连接状态显示 -->
+    <TextView
+        android:id="@+id/statusTextView"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="状态: 未连接"
+        android:textSize="16sp"
+        android:layout_marginBottom="8dp" />
+
+    <!-- 日志显示区域 -->
+    <ScrollView
+        android:id="@+id/logScrollView"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1">
+
+        <TextView
+            android:id="@+id/logTextView"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="日志:\n"
+            android:textSize="12sp"
+            android:typeface="monospace" />
+    </ScrollView>
+
+</LinearLayout>

@@ -1,0 +1,66 @@
+plugins {
+    id 'com.android.application'
+    id 'org.jetbrains.kotlin.android'
+}
+
+android {
+    namespace 'com.byd.dglab.integration'
+    compileSdk 34
+
+    defaultConfig {
+        applicationId "com.byd.dglab.integration"
+        minSdk 25
+        targetSdk 34
+        versionCode 1
+        versionName "1.0"
+
+        testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
+        vectorDrawables.useSupportLibrary = true
+    }
+
+    buildTypes {
+        release {
+            minifyEnabled false
+            proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
+        }
+    }
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_1_8
+        targetCompatibility JavaVersion.VERSION_1_8
+    }
+    kotlinOptions {
+        jvmTarget = '1.8'
+    }
+}
+
+dependencies {
+    implementation 'androidx.core:core-ktx:1.12.0'
+    implementation 'androidx.lifecycle:lifecycle-runtime-ktx:2.6.2'
+    implementation 'androidx.activity:activity-compose:1.8.2'
+    implementation 'androidx.fragment:fragment-ktx:1.6.2'
+    implementation 'androidx.appcompat:appcompat:1.6.1'
+    implementation 'com.google.android.material:material:1.10.0'
+    implementation 'androidx.constraintlayout:constraintlayout:2.1.4'
+
+    // WebSocket通信
+    implementation 'org.java-websocket:Java-WebSocket:1.5.3'
+
+    // JSON处理
+    implementation 'com.google.code.gson:gson:2.8.9'
+
+    // 二维码扫描 (ZXing核心库)
+    implementation 'com.google.zxing:core:3.4.1'
+    
+    // 二维码扫描 (简化的扫描库)
+    implementation 'com.journeyapps:zxing-android-embedded:4.3.0'
+
+    // BYD-AUTO-API 说明：
+    // BYD-AUTO-API 是比亚迪车机系统内置的 API（android.hardware.bydauto.*）
+    // 无需外部 JAR，通过系统包直接使用
+    // 仅在 BYD 车机上可用，普通 Android 设备会自动使用 GPS 降级方案
+    // 详见项目中的 BYD_API_集成指南.md 文件
+    
+    testImplementation 'junit:junit:4.13.2'
+    androidTestImplementation 'androidx.test.ext:junit:1.1.5'
+    androidTestImplementation 'androidx.test.espresso:espresso-core:3.5.1'
+}
