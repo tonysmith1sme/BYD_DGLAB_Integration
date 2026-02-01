@@ -12,6 +12,7 @@ import android.widget.TextView;
 import android.widget.EditText;
 import android.widget.Toast;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.appcompat.app.AlertDialog;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
 import com.google.zxing.integration.android.IntentIntegrator;
@@ -54,6 +55,7 @@ public class MainActivity extends AppCompatActivity implements SpeedChangeListen
     private static final int QR_CODE_REQUEST_CODE = 101;
     private static final String PREFS_NAME = "WebSocketConfig";
     private static final String KEY_SERVER_URL = "server_url";
+    private static final String KEY_DISCLAIMER_SHOWN = "disclaimer_shown";
 
     // SharedPreferences
     private SharedPreferences sharedPreferences;
@@ -66,6 +68,9 @@ public class MainActivity extends AppCompatActivity implements SpeedChangeListen
         // 初始化SharedPreferences
         sharedPreferences = getSharedPreferences(PREFS_NAME, MODE_PRIVATE);
 
+        // 显示免责声明（首次运行）
+        showDisclaimerIfNeeded();
+
         // 初始化UI组件
         initializeUI();
 
@@ -76,6 +81,40 @@ public class MainActivity extends AppCompatActivity implements SpeedChangeListen
         requestPermissions();
 
         Log.d(TAG, "MainActivity created");
+    }
+
+    /**
+     * 显示免责声明（首次运行）
+     */
+    private void showDisclaimerIfNeeded() {
+        boolean disclaimerShown = sharedPreferences.getBoolean(KEY_DISCLAIMER_SHOWN, false);
+        
+        if (!disclaimerShown) {
+            AlertDialog.Builder builder = new AlertDialog.Builder(this);
+            builder.setTitle("免责声明")
+                    .setMessage("为保证行车驾驶安全，行车过程中不建议操作软件，并且由于其软件特殊性不建议将本App相关的智能设备用于主驾上。\n\n" +
+                            "免费软件，无偿使用，对于使用过程中造成的任何问题以及影响，本App开发及相关管理、测试人员对此概不负责。\n\n" +
+                            "同意请点击确定，否则点击取消退出软件。")
+                    .setPositiveButton("确定", (dialog, which) -> {
+                        // 记录已显示过免责声明
+                        SharedPreferences.Editor editor = sharedPreferences.edit();
+                        editor.putBoolean(KEY_DISCLAIMER_SHOWN, true);
+                        editor.apply();
+                        addLogEntry("已同意免责声明");
+                        dialog.dismiss();
+                    })
+                    .setNegativeButton("取消", (dialog, which) -> {
+                        addLogEntry("拒绝免责声明，退出应用");
+                        dialog.dismiss();
+                        // 延迟退出，让日志显示
+                        new android.os.Handler(android.os.Looper.getMainLooper()).postDelayed(() -> {
+                            finish();
+                            System.exit(0);
+                        }, 500);
+                    })
+                    .setCancelable(false)
+                    .show();
+        }
     }
 
     /**
