@@ -392,7 +392,7 @@ public class MainActivity extends AppCompatActivity implements SpeedChangeListen
     public void onSpeedChanged(double speedKmH) {
         runOnUiThread(() -> {
             // 更新UI显示
-            speedTextView.setText(String.format("%.1f km/h", speedKmH));
+            speedTextView.setText(String.format("%.1f", speedKmH));
 
             // 转换为控制参数
             int intensity = converter.convertSpeedToIntensity(speedKmH);
