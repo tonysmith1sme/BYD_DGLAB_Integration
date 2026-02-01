@@ -399,7 +399,7 @@ public class MainActivity extends AppCompatActivity implements SpeedChangeListen
             int frequency = converter.convertSpeedToFrequency(speedKmH);
 
             intensityTextView.setText(String.valueOf(intensity));
-            frequencyTextView.setText(String.format("%d Hz", frequency));
+            frequencyTextView.setText(String.valueOf(frequency));
 
             // 发送控制命令（如果已连接）
             if (webSocketService.isConnected()) {
