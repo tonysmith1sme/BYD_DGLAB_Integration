@@ -122,6 +122,17 @@
             android:alpha="0.8" />
     </LinearLayout>
 
+    <!-- 权限检查按钮 -->
+    <Button
+        android:id="@+id/permissionCheckButton"
+        android:layout_width="match_parent"
+        android:layout_height="40dp"
+        android:text="检查权限"
+        android:textSize="14sp"
+        android:layout_marginBottom="16dp"
+        android:background="@drawable/button_background"
+        android:textColor="@android:color/white" />
+
     <!-- 车速、强度、频率显示区域 -->
     <LinearLayout
         android:layout_width="match_parent"

@@ -28,6 +28,12 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
+
+        <activity
+            android:name=".PermissionActivity"
+            android:exported="false"
+            android:theme="@style/Theme.BYD_DGLAB_Integration"
+            android:parentActivityName=".MainActivity" />
     </application>
 
 </manifest>

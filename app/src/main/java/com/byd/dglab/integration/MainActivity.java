@@ -37,6 +37,7 @@ public class MainActivity extends AppCompatActivity implements SpeedChangeListen
     private EditText serverUrlEditText;
     private Button scanQrButton;
     private Button applyUrlButton;
+    private Button permissionCheckButton;
     private android.widget.RadioGroup dataSourceRadioGroup;
     private android.widget.RadioButton gpsOnlyRadio;
     private android.widget.RadioButton bydAutoRadio;
@@ -92,6 +93,7 @@ public class MainActivity extends AppCompatActivity implements SpeedChangeListen
         serverUrlEditText = findViewById(R.id.serverUrlEditText);
         scanQrButton = findViewById(R.id.scanQrButton);
         applyUrlButton = findViewById(R.id.applyUrlButton);
+        permissionCheckButton = findViewById(R.id.permissionCheckButton);
         dataSourceRadioGroup = findViewById(R.id.dataSourceRadioGroup);
         gpsOnlyRadio = findViewById(R.id.gpsOnlyRadio);
         bydAutoRadio = findViewById(R.id.bydAutoRadio);
@@ -107,6 +109,7 @@ public class MainActivity extends AppCompatActivity implements SpeedChangeListen
         disconnectButton.setOnClickListener(this::onDisconnectClicked);
         scanQrButton.setOnClickListener(this::onScanQrClicked);
         applyUrlButton.setOnClickListener(this::onApplyUrlClicked);
+        permissionCheckButton.setOnClickListener(this::onPermissionCheckClicked);
 
         // 初始状态
         updateStatus("未连接");
@@ -329,6 +332,16 @@ public class MainActivity extends AppCompatActivity implements SpeedChangeListen
      */
     private boolean isValidWebSocketUrl(String url) {
         return url.startsWith("ws://") || url.startsWith("wss://");
+    }
+
+    /**
+     * 权限检查按钮点击事件
+     */
+    private void onPermissionCheckClicked(View view) {
+        // 打开权限检查活动
+        android.content.Intent intent = new android.content.Intent(MainActivity.this, PermissionActivity.class);
+        startActivity(intent);
+        addLogEntry("打开权限检查界面");
     }
 
     /**

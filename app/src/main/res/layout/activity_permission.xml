@@ -1,0 +1,77 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:padding="16dp"
+    android:background="@android:color/white">
+
+    <!-- 标题 -->
+    <TextView
+        android:id="@+id/permission_title"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="权限检查和授予"
+        android:textSize="24sp"
+        android:textStyle="bold"
+        android:textColor="@android:color/black"
+        android:layout_marginBottom="16dp" />
+
+    <!-- 整体状态 -->
+    <TextView
+        android:id="@+id/permission_status_text"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="检查中..."
+        android:textSize="16sp"
+        android:textStyle="bold"
+        android:textColor="@android:color/holo_orange_dark"
+        android:layout_marginBottom="16dp"
+        android:padding="12dp"
+        android:background="@drawable/status_background" />
+
+    <!-- 权限列表 -->
+    <ScrollView
+        android:id="@+id/permission_scroll_view"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        android:layout_marginBottom="16dp">
+
+        <LinearLayout
+            android:id="@+id/permission_items_container"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical" />
+
+    </ScrollView>
+
+    <!-- 按钮区域 -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:spacing="8dp">
+
+        <Button
+            android:id="@+id/request_permissions_button"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:text="请求权限授予"
+            android:layout_marginEnd="8dp"
+            android:background="@drawable/button_background"
+            android:textColor="@android:color/white" />
+
+        <Button
+            android:id="@+id/return_button"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:text="返回"
+            android:background="@drawable/button_background_secondary"
+            android:textColor="@android:color/white" />
+
+    </LinearLayout>
+
+</LinearLayout>
