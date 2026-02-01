@@ -68,17 +68,14 @@ public class MainActivity extends AppCompatActivity implements SpeedChangeListen
         // 初始化SharedPreferences
         sharedPreferences = getSharedPreferences(PREFS_NAME, MODE_PRIVATE);
 
-        // 显示免责声明（首次运行）
-        showDisclaimerIfNeeded();
-
         // 初始化UI组件
         initializeUI();
 
         // 初始化服务
         initializeServices();
 
-        // 请求权限
-        requestPermissions();
+        // 显示免责声明（首次运行）或直接请求权限
+        showDisclaimerIfNeeded();
 
         Log.d(TAG, "MainActivity created");
     }
@@ -102,6 +99,8 @@ public class MainActivity extends AppCompatActivity implements SpeedChangeListen
                         editor.apply();
                         addLogEntry("已同意免责声明");
                         dialog.dismiss();
+                        // 同意后再请求权限
+                        requestPermissions();
                     })
                     .setNegativeButton("取消", (dialog, which) -> {
                         addLogEntry("拒绝免责声明，退出应用");
@@ -114,6 +113,9 @@ public class MainActivity extends AppCompatActivity implements SpeedChangeListen
                     })
                     .setCancelable(false)
                     .show();
+        } else {
+            // 已经同意过免责声明，直接请求权限
+            requestPermissions();
         }
     }
 
