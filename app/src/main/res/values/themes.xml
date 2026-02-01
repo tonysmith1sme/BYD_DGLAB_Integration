@@ -1,29 +1,25 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <!-- Base application theme. -->
-    <style name="Theme.BYD_DGLAB_Integration" parent="Theme.MaterialComponents.DayNight.DarkActionBar">
-        <!-- Primary brand color. -->
-        <item name="colorPrimary">@color/purple_500</item>
-        <item name="colorPrimaryVariant">@color/purple_700</item>
-        <item name="colorSecondary">@color/teal_200</item>
-        <item name="colorSecondaryVariant">@color/teal_700</item>
-        <item name="colorError">@color/red_500</item>
-        <item name="colorOnPrimary">@color/white</item>
-        <item name="colorOnSecondary">@color/black</item>
-        <item name="colorOnError">@color/white</item>
-        <item name="colorOnBackground">@color/black</item>
-        <item name="colorSurface">@color/white</item>
-        <item name="colorOnSurface">@color/black</item>
+    <style name="Theme.BYD_DGLAB_Integration" parent="Theme.Material3.DayNight.NoActionBar">
+
+        <item name="colorPrimary">#006492</item>
+        <item name="colorOnPrimary">#FFFFFF</item>
+        <item name="colorPrimaryContainer">#D3E3FD</item>
+        <item name="colorOnPrimaryContainer">#001E30</item>
+
+        <item name="colorSecondary">#4C617B</item>
+        <item name="colorOnSecondary">#FFFFFF</item>
+        <item name="colorSecondaryContainer">#D3E3FD</item>
+        <item name="colorOnSecondaryContainer">#071E36</item>
+
+        <item name="android:colorBackground">#F2F5FA</item>
+        <item name="colorSurface">#FFFFFF</item>
+        <item name="colorOnSurface">#191C20</item>
+
+        <item name="android:statusBarColor">@android:color/transparent</item>
+        <item name="android:windowLightStatusBar">true</item>
     </style>
 
-    <!-- 颜色定义 -->
-    <color name="purple_200">#FFBB86FC</color>
-    <color name="purple_500">#FF6200EE</color>
-    <color name="purple_700">#FF3700B3</color>
-    <color name="teal_200">#FF03DAC5</color>
-    <color name="teal_700">#FF018786</color>
-    <color name="black">#FF000000</color>
-    <color name="white">#FFFFFFFF</color>
-    <color name="red_500">#FFE53935</color>
-    <color name="ic_launcher_background">#FF6200EE</color>
+    <color name="ic_launcher_background">#006492</color>
+
 </resources>
