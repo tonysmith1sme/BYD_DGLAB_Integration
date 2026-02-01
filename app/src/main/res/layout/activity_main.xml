@@ -4,246 +4,398 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
+    android:background="#F5F7FA"
     android:orientation="vertical"
-    android:padding="16dp"
     tools:context=".MainActivity">
 
-    <TextView
-        android:id="@+id/titleTextView"
+    <com.google.android.material.appbar.MaterialToolbar
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:text="BYD DG-LAB 集成控制"
-        android:textSize="24sp"
-        android:textStyle="bold"
-        android:gravity="center"
-        android:layout_marginBottom="16dp" />
-
-    <!-- WebSocket地址配置区域 -->
-    <LinearLayout
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:orientation="vertical"
-        android:layout_marginBottom="16dp"
-        android:padding="12dp">
+        android:layout_height="?attr/actionBarSize"
+        android:background="@android:color/white"
+        app:elevation="2dp"
+        app:titleCentered="true">
 
         <TextView
-            android:layout_width="match_parent"
+            android:id="@+id/titleTextView"
+            android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="服务器地址配置"
-            android:textSize="14sp"
-            android:textStyle="bold"
-            android:layout_marginBottom="8dp" />
+            android:layout_gravity="center"
+            android:text="BYD DG-LAB 集成控制"
+            android:textColor="#333333"
+            android:textSize="18sp"
+            android:textStyle="bold" />
+    </com.google.android.material.appbar.MaterialToolbar>
+
+    <androidx.core.widget.NestedScrollView
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        android:fillViewport="true">
 
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:orientation="horizontal"
-            android:layout_marginBottom="8dp">
+            android:orientation="vertical"
+            android:padding="16dp">
 
-            <EditText
-                android:id="@+id/serverUrlEditText"
-                android:layout_width="0dp"
-                android:layout_height="40dp"
-                android:layout_weight="1"
-                android:hint="输入WebSocket地址"
-                android:inputType="textUri"
-                android:padding="8dp"
-                android:textSize="12sp"
-                android:layout_marginEnd="8dp" />
+            <com.google.android.material.card.MaterialCardView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="16dp"
+                app:cardBackgroundColor="#FFFFFF"
+                app:cardCornerRadius="16dp"
+                app:cardElevation="0dp"
+                app:strokeColor="#E0E0E0"
+                app:strokeWidth="1dp">
 
-            <Button
-                android:id="@+id/scanQrButton"
-                android:layout_width="wrap_content"
-                android:layout_height="40dp"
-                android:text="扫码"
-                android:textSize="12sp"
-                android:paddingHorizontal="12dp" />
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:padding="20dp">
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginBottom="16dp"
+                        android:text="实时监控"
+                        android:textColor="#666666"
+                        android:textSize="14sp"
+                        android:textStyle="bold" />
+
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:baselineAligned="false"
+                        android:orientation="horizontal">
+
+                        <LinearLayout
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1"
+                            android:gravity="center"
+                            android:orientation="vertical">
+
+                            <TextView
+                                android:id="@+id/speedTextView"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="0"
+                                android:textColor="#1976D2"
+                                android:textSize="28sp"
+                                android:textStyle="bold" />
+
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="km/h"
+                                android:textColor="#999999"
+                                android:textSize="12sp" />
+                        </LinearLayout>
+
+                        <View
+                            android:layout_width="1dp"
+                            android:layout_height="match_parent"
+                            android:background="#EEEEEE"
+                            android:layout_marginHorizontal="8dp"/>
+
+                        <LinearLayout
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1"
+                            android:gravity="center"
+                            android:orientation="vertical">
+
+                            <TextView
+                                android:id="@+id/intensityTextView"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="0"
+                                android:textColor="#333333"
+                                android:textSize="28sp"
+                                android:textStyle="bold" />
+
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="强度"
+                                android:textColor="#999999"
+                                android:textSize="12sp" />
+                        </LinearLayout>
+
+                        <View
+                            android:layout_width="1dp"
+                            android:layout_height="match_parent"
+                            android:background="#EEEEEE"
+                            android:layout_marginHorizontal="8dp"/>
+
+                        <LinearLayout
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1"
+                            android:gravity="center"
+                            android:orientation="vertical">
+
+                            <TextView
+                                android:id="@+id/frequencyTextView"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="10"
+                                android:textColor="#333333"
+                                android:textSize="28sp"
+                                android:textStyle="bold" />
+
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="Hz"
+                                android:textColor="#999999"
+                                android:textSize="12sp" />
+                        </LinearLayout>
+                    </LinearLayout>
+                </LinearLayout>
+            </com.google.android.material.card.MaterialCardView>
+
+            <com.google.android.material.card.MaterialCardView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="16dp"
+                app:cardBackgroundColor="#FFFFFF"
+                app:cardCornerRadius="16dp"
+                app:cardElevation="0dp"
+                app:strokeColor="#E0E0E0"
+                app:strokeWidth="1dp">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:padding="20dp">
+
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="horizontal"
+                        android:gravity="center_vertical"
+                        android:layout_marginBottom="16dp">
+
+                        <TextView
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1"
+                            android:text="连接配置"
+                            android:textColor="#333333"
+                            android:textSize="16sp"
+                            android:textStyle="bold" />
+
+                        <TextView
+                            android:id="@+id/statusTextView"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:background="@drawable/shape_status_badge"
+                            android:paddingHorizontal="8dp"
+                            android:paddingVertical="4dp"
+                            android:text="未连接"
+                            android:textColor="#FF5252"
+                            android:textSize="12sp"
+                            android:textStyle="bold"/>
+                    </LinearLayout>
+
+                    <com.google.android.material.textfield.TextInputLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:hint="WebSocket 地址"
+                        app:boxBackgroundColor="#F5F5F5"
+                        app:boxCornerRadiusBottomEnd="8dp"
+                        app:boxCornerRadiusBottomStart="8dp"
+                        app:boxCornerRadiusTopEnd="8dp"
+                        app:boxCornerRadiusTopStart="8dp"
+                        app:boxStrokeWidth="0dp"
+                        app:endIconMode="clear_text">
+
+                        <com.google.android.material.textfield.TextInputEditText
+                            android:id="@+id/serverUrlEditText"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:inputType="textUri"
+                            android:textSize="14sp" />
+                    </com.google.android.material.textfield.TextInputLayout>
+
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="12dp"
+                        android:orientation="horizontal">
+
+                        <Button
+                            android:id="@+id/scanQrButton"
+                            style="@style/Widget.MaterialComponents.Button.OutlinedButton"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_marginEnd="8dp"
+                            android:text="扫码" />
+
+                        <Button
+                            android:id="@+id/applyUrlButton"
+                            style="@style/Widget.MaterialComponents.Button.TextButton"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="应用地址" />
+                    </LinearLayout>
+
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="16dp"
+                        android:orientation="horizontal">
+
+                        <Button
+                            android:id="@+id/connectButton"
+                            android:layout_width="0dp"
+                            android:layout_height="50dp"
+                            android:layout_weight="1"
+                            android:layout_marginEnd="8dp"
+                            android:backgroundTint="#1976D2"
+                            android:text="连接" />
+
+                        <Button
+                            android:id="@+id/disconnectButton"
+                            style="@style/Widget.MaterialComponents.Button.OutlinedButton"
+                            android:layout_width="0dp"
+                            android:layout_height="50dp"
+                            android:layout_weight="1"
+                            android:textColor="#D32F2F"
+                            app:strokeColor="#D32F2F"
+                            android:text="断开" />
+                    </LinearLayout>
+
+                </LinearLayout>
+            </com.google.android.material.card.MaterialCardView>
+
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="高级设置"
+                android:textSize="14sp"
+                android:textColor="#666666"
+                android:layout_marginBottom="8dp"
+                android:layout_marginStart="4dp"/>
+
+            <com.google.android.material.card.MaterialCardView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="24dp"
+                app:cardBackgroundColor="#FFFFFF"
+                app:cardCornerRadius="16dp"
+                app:cardElevation="0dp"
+                app:strokeColor="#E0E0E0"
+                app:strokeWidth="1dp">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:padding="16dp">
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="数据来源优先权"
+                        android:textColor="#333333"
+                        android:textStyle="bold"
+                        android:layout_marginBottom="8dp"/>
+
+                    <RadioGroup
+                        android:id="@+id/dataSourceRadioGroup"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content">
+
+                        <RadioButton
+                            android:id="@+id/gpsOnlyRadio"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:text="仅使用 GPS" />
+
+                        <RadioButton
+                            android:id="@+id/bydAutoRadio"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:text="智能切换 (优先 BYD 车机)" />
+
+                        <RadioButton
+                            android:id="@+id/bydOnlyRadio"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:text="仅使用 BYD 车机" />
+                    </RadioGroup>
+
+                    <TextView
+                        android:id="@+id/dataSourceStatusTextView"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="8dp"
+                        android:background="#F5F5F5"
+                        android:padding="8dp"
+                        android:text="当前使用: GPS"
+                        android:textColor="#666666"
+                        android:textSize="12sp" />
+
+                    <View
+                        android:layout_width="match_parent"
+                        android:layout_height="1dp"
+                        android:background="#EEEEEE"
+                        android:layout_marginVertical="12dp"/>
+
+                    <Button
+                        android:id="@+id/permissionCheckButton"
+                        style="@style/Widget.MaterialComponents.Button.TextButton"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:text="系统权限自检"
+                        android:textAlignment="viewStart"/>
+
+                </LinearLayout>
+            </com.google.android.material.card.MaterialCardView>
+
         </LinearLayout>
+    </androidx.core.widget.NestedScrollView>
 
-        <Button
-            android:id="@+id/applyUrlButton"
-            android:layout_width="match_parent"
-            android:layout_height="36dp"
-            android:text="应用地址"
-            android:textSize="12sp" />
-    </LinearLayout>
-
-    <!-- 车速数据源选择区域 -->
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
+        android:background="#212121"
         android:orientation="vertical"
-        android:layout_marginBottom="16dp"
-        android:padding="12dp">
+        android:paddingTop="8dp">
 
         <TextView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="车速数据源选择"
-            android:textSize="14sp"
+            android:text="SYSTEM LOG"
+            android:textColor="#757575"
+            android:textSize="10sp"
             android:textStyle="bold"
-            android:layout_marginBottom="8dp" />
+            android:letterSpacing="0.1"
+            android:paddingHorizontal="16dp"
+            android:layout_marginBottom="4dp" />
 
-        <RadioGroup
-            android:id="@+id/dataSourceRadioGroup"
+        <ScrollView
+            android:id="@+id/logScrollView"
             android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:orientation="vertical">
+            android:layout_height="120dp"
+            android:paddingHorizontal="16dp"
+            android:paddingBottom="16dp">
 
-            <RadioButton
-                android:id="@+id/gpsOnlyRadio"
+            <TextView
+                android:id="@+id/logTextView"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:text="仅使用 GPS"
-                android:textSize="14sp" />
-
-            <RadioButton
-                android:id="@+id/bydAutoRadio"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:text="优先 BYD，GPS 备用"
-                android:textSize="14sp" />
-
-            <RadioButton
-                android:id="@+id/bydOnlyRadio"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:text="仅使用 BYD 车机"
-                android:textSize="14sp" />
-        </RadioGroup>
-
-        <TextView
-            android:id="@+id/dataSourceStatusTextView"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:text="当前数据源: GPS"
-            android:textSize="12sp"
-            android:layout_marginTop="8dp"
-            android:alpha="0.8" />
+                android:text="> Ready...\n> Waiting for connection..."
+                android:textColor="#00E676"
+                android:textSize="12sp"
+                android:fontFamily="monospace"
+                android:lineSpacingMultiplier="1.2" />
+        </ScrollView>
     </LinearLayout>
-
-    <!-- 权限检查按钮 -->
-    <Button
-        android:id="@+id/permissionCheckButton"
-        android:layout_width="match_parent"
-        android:layout_height="40dp"
-        android:text="检查权限"
-        android:textSize="14sp"
-        android:layout_marginBottom="16dp"
-        android:background="@drawable/button_background"
-        android:textColor="@android:color/white" />
-
-    <!-- 车速、强度、频率显示区域 -->
-    <LinearLayout
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:orientation="horizontal"
-        android:layout_marginBottom="16dp">
-
-        <TextView
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_weight="1"
-            android:text="当前车速:"
-            android:textSize="18sp" />
-
-        <TextView
-            android:id="@+id/speedTextView"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_weight="1"
-            android:text="0 km/h"
-            android:textSize="18sp"
-            android:textStyle="bold"
-            android:gravity="end" />
-    </LinearLayout>
-
-    <LinearLayout
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:orientation="horizontal"
-        android:layout_marginBottom="16dp">
-
-        <TextView
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_weight="1"
-            android:text="强度:"
-            android:textSize="18sp" />
-
-        <TextView
-            android:id="@+id/intensityTextView"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_weight="1"
-            android:text="0"
-            android:textSize="18sp"
-            android:textStyle="bold"
-            android:gravity="end" />
-    </LinearLayout>
-
-    <LinearLayout
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:orientation="horizontal"
-        android:layout_marginBottom="16dp">
-
-        <TextView
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_weight="1"
-            android:text="频率:"
-            android:textSize="18sp" />
-
-        <TextView
-            android:id="@+id/frequencyTextView"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_weight="1"
-            android:text="10 Hz"
-            android:textSize="18sp"
-            android:textStyle="bold"
-            android:gravity="end" />
-    </LinearLayout>
-
-    <!-- 连接/断开按钮 -->
-    <Button
-        android:id="@+id/connectButton"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:text="连接到DG-LAB"
-        android:layout_marginBottom="8dp" />
-
-    <Button
-        android:id="@+id/disconnectButton"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:text="断开连接"
-        android:layout_marginBottom="16dp" />
-
-    <!-- 连接状态显示 -->
-    <TextView
-        android:id="@+id/statusTextView"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:text="状态: 未连接"
-        android:textSize="16sp"
-        android:layout_marginBottom="8dp" />
-
-    <!-- 日志显示区域 -->
-    <ScrollView
-        android:id="@+id/logScrollView"
-        android:layout_width="match_parent"
-        android:layout_height="0dp"
-        android:layout_weight="1">
-
-        <TextView
-            android:id="@+id/logTextView"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:text="日志:\n"
-            android:textSize="12sp"
-            android:typeface="monospace" />
-    </ScrollView>
 
 </LinearLayout>
