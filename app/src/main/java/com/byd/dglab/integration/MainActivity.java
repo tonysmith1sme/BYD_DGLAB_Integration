@@ -53,9 +53,20 @@ public class MainActivity extends AppCompatActivity implements SpeedChangeListen
     // 权限请求码
     private static final int PERMISSION_REQUEST_CODE = 100;
     private static final int QR_CODE_REQUEST_CODE = 101;
+    private static final int BYD_PERMISSION_REQUEST_CODE = 102;
     private static final String PREFS_NAME = "WebSocketConfig";
     private static final String KEY_SERVER_URL = "server_url";
     private static final String KEY_DISCLAIMER_SHOWN = "disclaimer_shown";
+
+    // BYD车机权限列表 - 根据文档，只有这些类需要申请动态权限
+    private static final String[] BYD_PERMISSIONS = {
+            BydManifest.permission.BYDAUTO_BODYWORK_COMMON,
+            BydManifest.permission.BYDAUTO_AC_COMMON,
+            BydManifest.permission.BYDAUTO_PANORAMA_COMMON,
+            BydManifest.permission.BYDAUTO_SETTING_COMMON,
+            BydManifest.permission.BYDAUTO_INSTRUMENT_COMMON,
+            BydManifest.permission.BYDAUTO_DOOR_LOCK_COMMON
+    };
 
     // SharedPreferences
     private SharedPreferences sharedPreferences;
@@ -99,8 +110,8 @@ public class MainActivity extends AppCompatActivity implements SpeedChangeListen
                         editor.apply();
                         addLogEntry("已同意免责声明");
                         dialog.dismiss();
-                        // 同意后再请求权限
-                        requestPermissions();
+                        // 同意后再检查并请求BYD权限
+                        checkAndRequestBydPermissions();
                     })
                     .setNegativeButton("取消", (dialog, which) -> {
                         addLogEntry("拒绝免责声明，退出应用");
@@ -114,7 +125,23 @@ public class MainActivity extends AppCompatActivity implements SpeedChangeListen
                     .setCancelable(false)
                     .show();
         } else {
-            // 已经同意过免责声明，直接请求权限
+            // 已经同意过免责声明，直接检查并请求权限
+            checkAndRequestBydPermissions();
+        }
+    }
+
+    /**
+     * 检查并请求BYD车机权限
+     */
+    private void checkAndRequestBydPermissions() {
+        boolean needBydPermissions = PermissionUtils.needRequestPermission(this, BYD_PERMISSIONS);
+        
+        if (needBydPermissions) {
+            addLogEntry("检测到缺少BYD车机权限，正在请求...");
+            ActivityCompat.requestPermissions(this, BYD_PERMISSIONS, BYD_PERMISSION_REQUEST_CODE);
+        } else {
+            addLogEntry("BYD车机权限已授予");
+            // BYD权限已有，继续请求普通权限
             requestPermissions();
         }
     }
@@ -494,7 +521,8 @@ public class MainActivity extends AppCompatActivity implements SpeedChangeListen
     public void onRequestPermissionsResult(int requestCode, String[] permissions, int[] grantResults) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults);
 
-        if (requestCode == PERMISSION_REQUEST_CODE) {
+        if (requestCode == BYD_PERMISSION_REQUEST_CODE) {
+            // 处理BYD车机权限结果
             boolean allGranted = true;
             for (int result : grantResults) {
                 if (result != PackageManager.PERMISSION_GRANTED) {
@@ -504,7 +532,26 @@ public class MainActivity extends AppCompatActivity implements SpeedChangeListen
             }
 
             if (allGranted) {
-                addLogEntry("权限已授予");
+                addLogEntry("BYD车机权限已授予");
+                // BYD权限获得后，继续请求普通权限
+                requestPermissions();
+            } else {
+                addLogEntry("BYD车机权限被拒绝，某些功能可能不可用");
+                // BYD权限被拒，继续请求普通权限
+                requestPermissions();
+            }
+        } else if (requestCode == PERMISSION_REQUEST_CODE) {
+            // 处理普通权限结果
+            boolean allGranted = true;
+            for (int result : grantResults) {
+                if (result != PackageManager.PERMISSION_GRANTED) {
+                    allGranted = false;
+                    break;
+                }
+            }
+
+            if (allGranted) {
+                addLogEntry("所有权限已授予");
             } else {
                 addLogEntry("部分权限被拒绝，可能影响功能");
             }

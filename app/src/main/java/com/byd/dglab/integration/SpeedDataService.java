@@ -62,6 +62,7 @@ public class SpeedDataService implements LocationListener {
                 Constants.PREF_DATA_SOURCE_MODE,
                 Constants.DEFAULT_DATA_SOURCE_MODE);
 
+        Log.d(TAG, "SpeedDataService initialized with mode: " + getModeDisplayName(currentDataSourceMode));
         initializeServices();
     }
 
@@ -124,6 +125,8 @@ public class SpeedDataService implements LocationListener {
     /**
      * 初始化BYD自动驾驶API
      * 
+     * 重要：获取BYD车速数据需要先获得BYDAUTO_SPEED_COMMON动态权限
+     * 
      * 完整BYD API集成示例（需要导入BYD SDK）：
      * <pre>
      * private BYDAutoSpeedDevice bydSpeedDevice;
@@ -131,19 +134,29 @@ public class SpeedDataService implements LocationListener {
      * 
      * private void initializeBYDAutoAPI() {
      *     try {
-     *         bydSpeedDevice = BYDAutoSpeedDevice.getInstance();
+     *         // 检查是否有车速权限
+     *         if (ActivityCompat.checkSelfPermission(context, 
+     *                 BydManifest.permission.BYDAUTO_SPEED_COMMON) != PackageManager.PERMISSION_GRANTED) {
+     *             Log.w(TAG, "BYDAUTO_SPEED_COMMON permission not granted");
+     *             isBydApiAvailable = false;
+     *             return;
+     *         }
+     *         
+     *         bydSpeedDevice = BYDAutoSpeedDevice.getInstance(context);
      *         if (bydSpeedDevice != null) {
      *             bydSpeedListener = new AbsBYDAutoSpeedListener() {
      *                 @Override
-     *                 public void onBYDAutoSpeedChanged(float speedKmh) {
+     *                 public void onSpeedChanged(double speedKmh) {
      *                     handleSpeedUpdate(speedKmh, true);
      *                 }
      *             };
-     *             bydSpeedDevice.registerBYDAutoSpeedListener(bydSpeedListener);
+     *             bydSpeedDevice.registerListener(bydSpeedListener);
      *             isBydApiAvailable = true;
+     *             Log.d(TAG, "BYD Auto API initialized successfully");
      *         }
      *     } catch (Exception e) {
      *         isBydApiAvailable = false;
+     *         Log.e(TAG, "Error initializing BYD Auto API", e);
      *     }
      * }
      * </pre>

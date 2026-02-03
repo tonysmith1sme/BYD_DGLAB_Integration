@@ -22,6 +22,10 @@ public final class BydManifest {
         public static final String BYDAUTO_AC_GET = "android.permission.BYDAUTO_AC_GET";
         public static final String BYDAUTO_AC_SET = "android.permission.BYDAUTO_AC_SET";
 
+        /** 车速权限 */
+        public static final String BYDAUTO_SPEED_COMMON = "android.permission.BYDAUTO_SPEED_COMMON";
+        public static final String BYDAUTO_SPEED_GET = "android.permission.BYDAUTO_SPEED_GET";
+
         /** 全景摄像头权限 */
         public static final String BYDAUTO_PANORAMA_COMMON = "android.permission.BYDAUTO_PANORAMA_COMMON";
         public static final String BYDAUTO_PANORAMA_GET = "android.permission.BYDAUTO_PANORAMA_GET";
@@ -29,6 +33,7 @@ public final class BydManifest {
         /** 仪表板权限 */
         public static final String BYDAUTO_INSTRUMENT_COMMON = "android.permission.BYDAUTO_INSTRUMENT_COMMON";
         public static final String BYDAUTO_INSTRUMENT_GET = "android.permission.BYDAUTO_INSTRUMENT_GET";
+        public static final String BYDAUTO_INSTRUMENT_SET = "android.permission.BYDAUTO_INSTRUMENT_SET";
 
         /** 门锁系统权限 */
         public static final String BYDAUTO_DOOR_LOCK_COMMON = "android.permission.BYDAUTO_DOOR_LOCK_COMMON";
@@ -47,5 +52,13 @@ public final class BydManifest {
         /** 统计数据权限 */
         public static final String BYDAUTO_STATISTIC_COMMON = "android.permission.BYDAUTO_STATISTIC_COMMON";
         public static final String BYDAUTO_STATISTIC_GET = "android.permission.BYDAUTO_STATISTIC_GET";
+        
+        /** 车灯权限 */
+        public static final String BYDAUTO_LIGHT_COMMON = "android.permission.BYDAUTO_LIGHT_COMMON";
+        public static final String BYDAUTO_LIGHT_GET = "android.permission.BYDAUTO_LIGHT_GET";
+        
+        /** 空气质量权限 */
+        public static final String BYDAUTO_AIR_QUALITY_COMMON = "android.permission.BYDAUTO_AIR_QUALITY_COMMON";
+        public static final String BYDAUTO_AIR_QUALITY_GET = "android.permission.BYDAUTO_AIR_QUALITY_GET";
     }
 }

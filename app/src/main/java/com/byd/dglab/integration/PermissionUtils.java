@@ -70,6 +70,10 @@ public class PermissionUtils {
                 return "车身系统权限";
             case BydManifest.permission.BYDAUTO_BODYWORK_GET:
                 return "车身数据读取权限";
+            case BydManifest.permission.BYDAUTO_SPEED_COMMON:
+                return "车速系统权限";
+            case BydManifest.permission.BYDAUTO_SPEED_GET:
+                return "车速数据读取权限";
             case BydManifest.permission.BYDAUTO_AC_COMMON:
                 return "空调系统权限";
             case BydManifest.permission.BYDAUTO_INSTRUMENT_COMMON:
@@ -82,6 +86,12 @@ public class PermissionUtils {
                 return "引擎系统权限";
             case BydManifest.permission.BYDAUTO_STATISTIC_COMMON:
                 return "统计数据权限";
+            case BydManifest.permission.BYDAUTO_PANORAMA_COMMON:
+                return "全景摄像头权限";
+            case BydManifest.permission.BYDAUTO_LIGHT_COMMON:
+                return "车灯系统权限";
+            case BydManifest.permission.BYDAUTO_AIR_QUALITY_COMMON:
+                return "空气质量权限";
             case "android.permission.INTERNET":
                 return "网络权限";
             case "android.permission.ACCESS_NETWORK_STATE":

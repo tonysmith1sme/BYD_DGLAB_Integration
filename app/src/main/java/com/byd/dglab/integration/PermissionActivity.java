@@ -29,14 +29,15 @@ public class PermissionActivity extends AppCompatActivity {
     private Button returnButton;
     private ScrollView permissionScrollView;
 
-    // BYD车机系统所需的权限
+    // BYD车机系统所需的权限 - 根据文档，只有这些类需要申请动态权限：
+    // 空调、车身、门锁、仪表、全景影像、设置
     private static final String[] BYD_PERMISSIONS = {
             BydManifest.permission.BYDAUTO_BODYWORK_COMMON,
             BydManifest.permission.BYDAUTO_AC_COMMON,
             BydManifest.permission.BYDAUTO_INSTRUMENT_COMMON,
             BydManifest.permission.BYDAUTO_DOOR_LOCK_COMMON,
             BydManifest.permission.BYDAUTO_SETTING_COMMON,
-            BydManifest.permission.BYDAUTO_ENGINE_COMMON,
+            BydManifest.permission.BYDAUTO_PANORAMA_COMMON,
     };
 
     // 标准Android权限
