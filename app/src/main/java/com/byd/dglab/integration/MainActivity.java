@@ -47,6 +47,7 @@ public class MainActivity extends AppCompatActivity implements SpeedChangeListen
     private android.widget.RadioButton bydAutoRadio;
     private android.widget.RadioButton bydOnlyRadio;
     private TextView dataSourceStatusTextView;
+    private com.google.android.material.materialswitch.MaterialSwitch rootGrantSwitch;
 
     // 服务组件
     private SpeedDataService speedDataService;
@@ -135,6 +136,37 @@ public class MainActivity extends AppCompatActivity implements SpeedChangeListen
     }
 
     /**
+     * 尝试通过Root权限授予权限
+     */
+    private void tryGrantPermissionsViaRoot() {
+        if (!RootUtils.isRootAvailable()) {
+            Toast.makeText(this, R.string.root_not_available, Toast.LENGTH_SHORT).show();
+            rootGrantSwitch.setChecked(false);
+            return;
+        }
+
+        addLogEntry("正在尝试通过 Root 权限授予 BYD 车机权限...");
+        
+        // 开启后台线程执行 Root 命令，避免阻塞 UI
+        new Thread(() -> {
+            boolean success = RootUtils.grantPermissionsViaRoot(getPackageName(), BYD_PERMISSIONS);
+            
+            runOnUiThread(() -> {
+                if (success) {
+                    Toast.makeText(this, R.string.root_grant_success, Toast.LENGTH_SHORT).show();
+                    addLogEntry("Root 权限授予成功，请手动进入系统设置确认或重启应用以生效");
+                    // 刷新权限状态
+                    checkAndRequestBydPermissions();
+                } else {
+                    Toast.makeText(this, R.string.root_grant_failed, Toast.LENGTH_SHORT).show();
+                    addLogEntry("Root 权限授予失败");
+                    rootGrantSwitch.setChecked(false);
+                }
+            });
+        }).start();
+    }
+
+    /**
      * 检查并请求BYD车机权限
      */
     private void checkAndRequestBydPermissions() {
@@ -171,6 +203,7 @@ public class MainActivity extends AppCompatActivity implements SpeedChangeListen
         bydAutoRadio = findViewById(R.id.bydAutoRadio);
         bydOnlyRadio = findViewById(R.id.bydOnlyRadio);
         dataSourceStatusTextView = findViewById(R.id.dataSourceStatusTextView);
+        rootGrantSwitch = findViewById(R.id.rootGrantSwitch);
 
         // 加载保存的WebSocket地址
         String savedUrl = sharedPreferences.getString(KEY_SERVER_URL, Constants.SOCKET_SERVER_URL);
@@ -182,6 +215,19 @@ public class MainActivity extends AppCompatActivity implements SpeedChangeListen
         scanQrButton.setOnClickListener(this::onScanQrClicked);
         applyUrlButton.setOnClickListener(this::onApplyUrlClicked);
         permissionCheckButton.setOnClickListener(this::onPermissionCheckClicked);
+
+        // 设置Root授权开关
+        boolean rootGrantEnabled = sharedPreferences.getBoolean(Constants.PREF_ROOT_GRANT_ENABLED, false);
+        rootGrantSwitch.setChecked(rootGrantEnabled);
+        rootGrantSwitch.setOnCheckedChangeListener((buttonView, isChecked) -> {
+            SharedPreferences.Editor editor = sharedPreferences.edit();
+            editor.putBoolean(Constants.PREF_ROOT_GRANT_ENABLED, isChecked);
+            editor.apply();
+
+            if (isChecked) {
+                tryGrantPermissionsViaRoot();
+            }
+        });
 
         // 初始状态
         updateStatus("未连接");

@@ -117,6 +117,9 @@ public class Constants {
     /** SharedPreferences中WebSocket地址的键 */
     public static final String PREF_WEBSOCKET_URL = "websocket_url";
 
+    /** SharedPreferences中是否启用Root权限自动授权 */
+    public static final String PREF_ROOT_GRANT_ENABLED = "root_grant_enabled";
+
     // ==================== 其他常量 ====================
     /** 日志标签 */
     public static final String LOG_TAG = "BYD_DGLAB";

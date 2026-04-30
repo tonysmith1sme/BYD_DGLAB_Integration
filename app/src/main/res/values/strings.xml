@@ -43,4 +43,12 @@
     <string name="permission_request_now">请求权限授予</string>
     <string name="permission_section_byd">BYD 车机系统权限</string>
     <string name="permission_section_standard">标准 Android 权限</string>
+
+    <string name="root_settings_title">实验室功能</string>
+    <string name="root_settings_subtitle">针对开发者和高级用户的实验性功能</string>
+    <string name="root_grant_title">通过 Root 自动授权</string>
+    <string name="root_grant_summary">开启后将尝试通过 Root 权限绕过签名限制（仅限 Root 设备）</string>
+    <string name="root_grant_success">Root 权限授予成功</string>
+    <string name="root_grant_failed">Root 权限授予失败，请检查 Root 状态</string>
+    <string name="root_not_available">设备未检测到 Root 权限</string>
 </resources>
