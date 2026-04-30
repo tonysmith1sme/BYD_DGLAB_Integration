@@ -15,8 +15,11 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.app.AlertDialog;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
+import android.content.res.ColorStateList;
 import com.google.zxing.integration.android.IntentIntegrator;
 import com.google.zxing.integration.android.IntentResult;
+import com.google.android.material.color.MaterialColors;
+import com.google.android.material.color.DynamicColors;
 
 /**
  * 主活动类
@@ -73,6 +76,7 @@ public class MainActivity extends AppCompatActivity implements SpeedChangeListen
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
+        DynamicColors.applyToActivityIfAvailable(this);
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
@@ -261,7 +265,7 @@ public class MainActivity extends AppCompatActivity implements SpeedChangeListen
      * @param mode 当前数据源模式
      */
     private void updateDataSourceStatus(int mode) {
-        String statusText = "当前数据源: ";
+        String statusText = "当前数据源：";
         switch (mode) {
             case Constants.DATA_SOURCE_GPS_ONLY:
                 statusText += "GPS";
@@ -497,7 +501,25 @@ public class MainActivity extends AppCompatActivity implements SpeedChangeListen
      * 更新状态显示
      */
     private void updateStatus(String status) {
-        statusTextView.setText("状态: " + status);
+        statusTextView.setText(status);
+
+        int backgroundColor;
+        int textColor;
+
+        if (getString(R.string.status_connected).equals(status)) {
+            backgroundColor = MaterialColors.getColor(statusTextView, com.google.android.material.R.attr.colorPrimaryContainer);
+            textColor = MaterialColors.getColor(statusTextView, com.google.android.material.R.attr.colorOnPrimaryContainer);
+        } else if (getString(R.string.status_connecting).equals(status)
+                || getString(R.string.status_disconnecting).equals(status)) {
+            backgroundColor = MaterialColors.getColor(statusTextView, com.google.android.material.R.attr.colorSecondaryContainer);
+            textColor = MaterialColors.getColor(statusTextView, com.google.android.material.R.attr.colorOnSecondaryContainer);
+        } else {
+            backgroundColor = MaterialColors.getColor(statusTextView, com.google.android.material.R.attr.colorErrorContainer);
+            textColor = MaterialColors.getColor(statusTextView, com.google.android.material.R.attr.colorOnErrorContainer);
+        }
+
+        statusTextView.setBackgroundTintList(ColorStateList.valueOf(backgroundColor));
+        statusTextView.setTextColor(textColor);
     }
 
     /**

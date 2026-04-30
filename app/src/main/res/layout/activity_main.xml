@@ -1,11 +1,10 @@
 <?xml version="1.0" encoding="utf-8"?>
-<androidx.coordinatorlayout.widget.CoordinatorLayout
-    xmlns:android="http://schemas.android.com/apk/res/android"
+<androidx.coordinatorlayout.widget.CoordinatorLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="#F2F5FA"
+    android:background="?attr/colorSurface"
     tools:context=".MainActivity">
 
     <LinearLayout
@@ -13,32 +12,60 @@
         android:layout_height="match_parent"
         android:orientation="vertical">
 
-        <com.google.android.material.appbar.MaterialToolbar
-            android:id="@+id/topToolbar"
+        <com.google.android.material.appbar.AppBarLayout
             android:layout_width="match_parent"
-            android:layout_height="?attr/actionBarSize"
-            android:background="@android:color/transparent"
-            app:titleCentered="true">
+            android:layout_height="wrap_content"
+            android:background="?attr/colorSurface"
+            android:fitsSystemWindows="true"
+            android:paddingHorizontal="8dp"
+            android:theme="@style/ThemeOverlay.Material3.Surface">
 
-            <TextView
-                android:id="@+id/titleTextView"
-                android:layout_width="wrap_content"
+            <com.google.android.material.appbar.MaterialToolbar
+                android:id="@+id/topToolbar"
+                android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_gravity="center"
-                android:text="BYD DG-LAB 集成控制"
-                android:textAppearance="?attr/textAppearanceTitleLarge"
-                android:textColor="#191C20"
-                android:textStyle="bold"/>
-        </com.google.android.material.appbar.MaterialToolbar>
+                android:minHeight="72dp"
+                app:titleCentered="false">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:gravity="center_vertical"
+                    android:orientation="vertical"
+                    android:paddingHorizontal="8dp"
+                    android:paddingVertical="8dp">
+
+                    <TextView
+                        android:id="@+id/titleTextView"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="@string/main_title"
+                        android:textAppearance="?attr/textAppearanceHeadlineSmall"
+                        android:textColor="?attr/colorOnSurface" />
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="2dp"
+                        android:text="@string/main_subtitle"
+                        android:textAppearance="?attr/textAppearanceBodyMedium"
+                        android:textColor="?attr/colorOnSurfaceVariant" />
+                </LinearLayout>
+            </com.google.android.material.appbar.MaterialToolbar>
+        </com.google.android.material.appbar.AppBarLayout>
 
         <androidx.core.widget.NestedScrollView
             android:layout_width="match_parent"
-            android:layout_height="match_parent"
+            android:layout_height="0dp"
+            android:layout_weight="1"
             android:clipToPadding="false"
             android:fillViewport="true"
-            android:paddingHorizontal="16dp"
-            android:paddingTop="12dp"
-            android:paddingBottom="88dp"> <LinearLayout
+            android:paddingStart="16dp"
+            android:paddingTop="8dp"
+            android:paddingEnd="16dp"
+            android:paddingBottom="96dp">
+
+            <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:orientation="vertical">
@@ -46,11 +73,11 @@
                 <com.google.android.material.card.MaterialCardView
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:layout_marginBottom="20dp"
-                    app:cardBackgroundColor="#FFFFFF"
+                    android:layout_marginBottom="16dp"
+                    app:cardBackgroundColor="?attr/colorSurfaceContainer"
                     app:cardCornerRadius="28dp"
-                    app:cardElevation="0dp"
-                    app:strokeWidth="0dp">
+                    app:strokeColor="?attr/colorOutlineVariant"
+                    app:strokeWidth="1dp">
 
                     <LinearLayout
                         android:layout_width="match_parent"
@@ -58,130 +85,134 @@
                         android:orientation="vertical"
                         android:padding="24dp">
 
-                        <LinearLayout
-                            android:layout_width="match_parent"
+                        <TextView
+                            android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
-                            android:gravity="center_vertical"
-                            android:orientation="horizontal"
-                            android:layout_marginBottom="20dp">
+                            android:text="@string/monitor_title"
+                            android:textAppearance="?attr/textAppearanceTitleLarge"
+                            android:textColor="?attr/colorOnSurface" />
 
-                            <ImageView
-                                android:layout_width="24dp"
-                                android:layout_height="24dp"
-                                android:src="@android:drawable/ic_menu_compass"
-                                app:tint="#44474E"
-                                android:layout_marginEnd="12dp"/>
-
-                            <TextView
-                                android:layout_width="wrap_content"
-                                android:layout_height="wrap_content"
-                                android:text="实时监控"
-                                android:textAppearance="?attr/textAppearanceTitleMedium"
-                                android:textColor="#44474E"
-                                android:textStyle="bold" />
-                        </LinearLayout>
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="4dp"
+                            android:text="@string/monitor_subtitle"
+                            android:textAppearance="?attr/textAppearanceBodyMedium"
+                            android:textColor="?attr/colorOnSurfaceVariant" />
 
                         <LinearLayout
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
-                            android:orientation="horizontal"
-                            android:spacing="12dp">
+                            android:layout_marginTop="20dp"
+                            android:orientation="horizontal">
 
                             <com.google.android.material.card.MaterialCardView
                                 android:layout_width="0dp"
                                 android:layout_height="wrap_content"
-                                android:layout_weight="1"
                                 android:layout_marginEnd="6dp"
-                                app:cardBackgroundColor="#D3E3FD"
-                                app:cardCornerRadius="20dp"
-                                app:cardElevation="0dp"
+                                android:layout_weight="1"
+                                app:cardBackgroundColor="?attr/colorPrimaryContainer"
+                                app:cardCornerRadius="24dp"
                                 app:strokeWidth="0dp">
+
                                 <LinearLayout
                                     android:layout_width="match_parent"
                                     android:layout_height="wrap_content"
                                     android:gravity="center"
+                                    android:minHeight="132dp"
                                     android:orientation="vertical"
-                                    android:paddingVertical="20dp">
+                                    android:padding="16dp">
+
                                     <TextView
                                         android:id="@+id/speedTextView"
                                         android:layout_width="wrap_content"
                                         android:layout_height="wrap_content"
                                         android:text="0"
-                                        android:textColor="#041E49"
-                                        android:textSize="36sp" 
-                                        android:textStyle="bold" />
+                                        android:textAppearance="?attr/textAppearanceDisplaySmall"
+                                        android:textColor="?attr/colorOnPrimaryContainer" />
+
                                     <TextView
                                         android:layout_width="wrap_content"
                                         android:layout_height="wrap_content"
-                                        android:text="km/h"
-                                        android:textAppearance="?attr/textAppearanceLabelLarge"
-                                        android:textColor="#041E49" />
+                                        android:layout_marginTop="4dp"
+                                        android:text="@string/speed_unit"
+                                        android:textAppearance="?attr/textAppearanceTitleSmall"
+                                        android:textColor="?attr/colorOnPrimaryContainer" />
                                 </LinearLayout>
                             </com.google.android.material.card.MaterialCardView>
 
-                            <com.google.android.material.card.MaterialCardView
+                            <LinearLayout
                                 android:layout_width="0dp"
                                 android:layout_height="wrap_content"
-                                android:layout_weight="1"
-                                android:layout_marginHorizontal="4dp"
-                                app:cardBackgroundColor="#E8DEF8"
-                                app:cardCornerRadius="20dp"
-                                app:cardElevation="0dp"
-                                app:strokeWidth="0dp">
-                                <LinearLayout
-                                    android:layout_width="match_parent"
-                                    android:layout_height="wrap_content"
-                                    android:gravity="center"
-                                    android:orientation="vertical"
-                                    android:paddingVertical="20dp">
-                                    <TextView
-                                        android:id="@+id/intensityTextView"
-                                        android:layout_width="wrap_content"
-                                        android:layout_height="wrap_content"
-                                        android:text="0"
-                                        android:textColor="#1D192B"
-                                        android:textSize="36sp"
-                                        android:textStyle="bold" />
-                                    <TextView
-                                        android:layout_width="wrap_content"
-                                        android:layout_height="wrap_content"
-                                        android:text="强度"
-                                        android:textAppearance="?attr/textAppearanceLabelLarge"
-                                        android:textColor="#1D192B" />
-                                </LinearLayout>
-                            </com.google.android.material.card.MaterialCardView>
-
-                            <com.google.android.material.card.MaterialCardView
-                                android:layout_width="0dp"
-                                android:layout_height="wrap_content"
-                                android:layout_weight="1"
                                 android:layout_marginStart="6dp"
-                                app:cardBackgroundColor="#FFD8E4"
-                                app:cardCornerRadius="20dp"
-                                app:cardElevation="0dp"
-                                app:strokeWidth="0dp">
-                                <LinearLayout
+                                android:layout_weight="1"
+                                android:orientation="vertical">
+
+                                <com.google.android.material.card.MaterialCardView
                                     android:layout_width="match_parent"
                                     android:layout_height="wrap_content"
-                                    android:gravity="center"
-                                    android:orientation="vertical"
-                                    android:paddingVertical="20dp">
-                                    <TextView
-                                        android:id="@+id/frequencyTextView"
-                                        android:layout_width="wrap_content"
+                                    app:cardBackgroundColor="?attr/colorSecondaryContainer"
+                                    app:cardCornerRadius="24dp"
+                                    app:strokeWidth="0dp">
+
+                                    <LinearLayout
+                                        android:layout_width="match_parent"
                                         android:layout_height="wrap_content"
-                                        android:text="10"
-                                        android:textColor="#31111D"
-                                        android:textSize="36sp"
-                                        android:textStyle="bold" />
-                                    <TextView
-                                        android:layout_width="wrap_content"
+                                        android:gravity="center"
+                                        android:minHeight="62dp"
+                                        android:orientation="vertical"
+                                        android:padding="16dp">
+
+                                        <TextView
+                                            android:id="@+id/intensityTextView"
+                                            android:layout_width="wrap_content"
+                                            android:layout_height="wrap_content"
+                                            android:text="0"
+                                            android:textAppearance="?attr/textAppearanceHeadlineMedium"
+                                            android:textColor="?attr/colorOnSecondaryContainer" />
+
+                                        <TextView
+                                            android:layout_width="wrap_content"
+                                            android:layout_height="wrap_content"
+                                            android:text="@string/intensity_label"
+                                            android:textAppearance="?attr/textAppearanceLabelLarge"
+                                            android:textColor="?attr/colorOnSecondaryContainer" />
+                                    </LinearLayout>
+                                </com.google.android.material.card.MaterialCardView>
+
+                                <com.google.android.material.card.MaterialCardView
+                                    android:layout_width="match_parent"
+                                    android:layout_height="wrap_content"
+                                    android:layout_marginTop="12dp"
+                                    app:cardBackgroundColor="?attr/colorTertiaryContainer"
+                                    app:cardCornerRadius="24dp"
+                                    app:strokeWidth="0dp">
+
+                                    <LinearLayout
+                                        android:layout_width="match_parent"
                                         android:layout_height="wrap_content"
-                                        android:text="Hz"
-                                        android:textAppearance="?attr/textAppearanceLabelLarge"
-                                        android:textColor="#31111D" />
-                                </LinearLayout>
-                            </com.google.android.material.card.MaterialCardView>
+                                        android:gravity="center"
+                                        android:minHeight="62dp"
+                                        android:orientation="vertical"
+                                        android:padding="16dp">
+
+                                        <TextView
+                                            android:id="@+id/frequencyTextView"
+                                            android:layout_width="wrap_content"
+                                            android:layout_height="wrap_content"
+                                            android:text="10"
+                                            android:textAppearance="?attr/textAppearanceHeadlineMedium"
+                                            android:textColor="?attr/colorOnTertiaryContainer" />
+
+                                        <TextView
+                                            android:layout_width="wrap_content"
+                                            android:layout_height="wrap_content"
+                                            android:text="@string/frequency_unit"
+                                            android:textAppearance="?attr/textAppearanceLabelLarge"
+                                            android:textColor="?attr/colorOnTertiaryContainer" />
+                                    </LinearLayout>
+                                </com.google.android.material.card.MaterialCardView>
+                            </LinearLayout>
                         </LinearLayout>
                     </LinearLayout>
                 </com.google.android.material.card.MaterialCardView>
@@ -189,11 +220,11 @@
                 <com.google.android.material.card.MaterialCardView
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:layout_marginBottom="20dp"
-                    app:cardBackgroundColor="#FFFFFF"
+                    android:layout_marginBottom="16dp"
+                    app:cardBackgroundColor="?attr/colorSurfaceContainer"
                     app:cardCornerRadius="28dp"
-                    app:cardElevation="0dp"
-                    app:strokeWidth="0dp">
+                    app:strokeColor="?attr/colorOutlineVariant"
+                    app:strokeWidth="1dp">
 
                     <LinearLayout
                         android:layout_width="match_parent"
@@ -204,50 +235,58 @@
                         <LinearLayout
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
-                            android:orientation="horizontal"
                             android:gravity="center_vertical"
-                            android:layout_marginBottom="20dp">
+                            android:orientation="horizontal">
 
-                            <TextView
+                            <LinearLayout
                                 android:layout_width="0dp"
                                 android:layout_height="wrap_content"
                                 android:layout_weight="1"
-                                android:text="连接配置"
-                                android:textAppearance="?attr/textAppearanceTitleMedium"
-                                android:textColor="#44474E"
-                                android:textStyle="bold" />
+                                android:orientation="vertical">
+
+                                <TextView
+                                    android:layout_width="wrap_content"
+                                    android:layout_height="wrap_content"
+                                    android:text="@string/connection_title"
+                                    android:textAppearance="?attr/textAppearanceTitleLarge"
+                                    android:textColor="?attr/colorOnSurface" />
+
+                                <TextView
+                                    android:layout_width="wrap_content"
+                                    android:layout_height="wrap_content"
+                                    android:layout_marginTop="4dp"
+                                    android:text="@string/connection_subtitle"
+                                    android:textAppearance="?attr/textAppearanceBodyMedium"
+                                    android:textColor="?attr/colorOnSurfaceVariant" />
+                            </LinearLayout>
 
                             <TextView
                                 android:id="@+id/statusTextView"
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
                                 android:background="@drawable/shape_status_badge_rounded"
-                                android:backgroundTint="#FFDAD6"
                                 android:paddingHorizontal="16dp"
                                 android:paddingVertical="8dp"
-                                android:text="未连接"
-                                android:textAppearance="?attr/textAppearanceLabelLarge"
-                                android:textColor="#410002"
-                                android:textStyle="bold"/>
+                                android:text="@string/status_disconnected"
+                                android:textAppearance="?attr/textAppearanceLabelLarge" />
                         </LinearLayout>
 
                         <com.google.android.material.textfield.TextInputLayout
+                            style="@style/Widget.Material3.TextInputLayout.OutlinedBox"
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
-                            android:hint="WebSocket 地址"
-                            app:boxBackgroundColor="#F2F5FA"
-                            app:boxStrokeWidth="0dp"
-                            app:boxCornerRadiusBottomEnd="16dp"
-                            app:boxCornerRadiusBottomStart="16dp"
-                            app:boxCornerRadiusTopEnd="16dp"
-                            app:boxCornerRadiusTopStart="16dp"
-                            app:endIconMode="clear_text">
+                            android:layout_marginTop="20dp"
+                            android:hint="@string/server_url_hint"
+                            app:endIconMode="clear_text"
+                            app:startIconDrawable="@android:drawable/ic_menu_share">
+
                             <com.google.android.material.textfield.TextInputEditText
                                 android:id="@+id/serverUrlEditText"
                                 android:layout_width="match_parent"
                                 android:layout_height="wrap_content"
                                 android:inputType="textUri"
-                                android:textSize="16sp" />
+                                android:maxLines="1"
+                                android:textAppearance="?attr/textAppearanceBodyLarge" />
                         </com.google.android.material.textfield.TextInputLayout>
 
                         <LinearLayout
@@ -259,75 +298,61 @@
                             <com.google.android.material.button.MaterialButton
                                 android:id="@+id/scanQrButton"
                                 style="@style/Widget.Material3.Button.TonalButton"
-                                android:layout_width="wrap_content"
-                                android:layout_height="56dp"
-                                android:layout_marginEnd="12dp"
-                                android:backgroundTint="#D3E3FD"
-                                android:textColor="#041E49"
-                                android:textSize="15sp"
-                                android:text="扫码" />
+                                android:layout_width="0dp"
+                                android:layout_height="wrap_content"
+                                android:layout_marginEnd="8dp"
+                                android:layout_weight="1"
+                                android:minHeight="52dp"
+                                android:text="@string/scan_qr" />
 
                             <com.google.android.material.button.MaterialButton
                                 android:id="@+id/applyUrlButton"
                                 style="@style/Widget.Material3.Button.TextButton"
-                                android:layout_width="wrap_content"
-                                android:layout_height="56dp"
-                                android:text="应用地址"
-                                android:textSize="15sp"
-                                android:textColor="#006492"/>
+                                android:layout_width="0dp"
+                                android:layout_height="wrap_content"
+                                android:layout_marginStart="8dp"
+                                android:layout_weight="1"
+                                android:minHeight="52dp"
+                                android:text="@string/apply_address" />
                         </LinearLayout>
 
                         <LinearLayout
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
-                            android:layout_marginTop="20dp"
+                            android:layout_marginTop="16dp"
                             android:orientation="horizontal">
 
                             <com.google.android.material.button.MaterialButton
                                 android:id="@+id/connectButton"
                                 style="@style/Widget.Material3.Button"
                                 android:layout_width="0dp"
-                                android:layout_height="64dp"
+                                android:layout_height="wrap_content"
+                                android:layout_marginEnd="8dp"
                                 android:layout_weight="1"
-                                android:layout_marginEnd="12dp"
-                                android:backgroundTint="#006492"
-                                android:text="连接"
-                                android:textSize="16sp"
-                                android:textStyle="bold" />
+                                android:minHeight="56dp"
+                                android:text="@string/connect_action" />
 
                             <com.google.android.material.button.MaterialButton
                                 android:id="@+id/disconnectButton"
-                                style="@style/Widget.Material3.Button.TonalButton"
+                                style="@style/Widget.Material3.Button.OutlinedButton"
                                 android:layout_width="0dp"
-                                android:layout_height="64dp"
+                                android:layout_height="wrap_content"
+                                android:layout_marginStart="8dp"
                                 android:layout_weight="1"
-                                android:backgroundTint="#FFDAD6"
-                                android:textColor="#410002"
-                                android:text="断开"
-                                android:textSize="16sp"
-                                android:textStyle="bold" />
+                                android:minHeight="56dp"
+                                android:text="@string/disconnect_action" />
                         </LinearLayout>
                     </LinearLayout>
                 </com.google.android.material.card.MaterialCardView>
 
-                <TextView
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:text="高级选项"
-                    android:textAppearance="?attr/textAppearanceTitleMedium"
-                    android:textColor="#44474E"
-                    android:textStyle="bold"
-                    android:layout_marginBottom="12dp"
-                    android:layout_marginStart="12dp"/>
-
                 <com.google.android.material.card.MaterialCardView
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:layout_marginBottom="24dp"
-                    app:cardBackgroundColor="#FFFFFF"
+                    android:layout_marginBottom="16dp"
+                    app:cardBackgroundColor="?attr/colorSurfaceContainer"
                     app:cardCornerRadius="28dp"
-                    app:cardElevation="0dp"
-                    app:strokeWidth="0dp">
+                    app:strokeColor="?attr/colorOutlineVariant"
+                    app:strokeWidth="1dp">
 
                     <LinearLayout
                         android:layout_width="match_parent"
@@ -338,40 +363,47 @@
                         <TextView
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
-                            android:text="数据来源优先权"
-                            android:textAppearance="?attr/textAppearanceBodyLarge"
-                            android:textColor="#191C20"
-                            android:textStyle="bold"
-                            android:layout_marginBottom="12dp"/>
+                            android:text="@string/data_source_title"
+                            android:textAppearance="?attr/textAppearanceTitleLarge"
+                            android:textColor="?attr/colorOnSurface" />
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="4dp"
+                            android:text="@string/data_source_subtitle"
+                            android:textAppearance="?attr/textAppearanceBodyMedium"
+                            android:textColor="?attr/colorOnSurfaceVariant" />
 
                         <RadioGroup
                             android:id="@+id/dataSourceRadioGroup"
                             android:layout_width="match_parent"
-                            android:layout_height="wrap_content">
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="16dp">
+
                             <com.google.android.material.radiobutton.MaterialRadioButton
                                 android:id="@+id/gpsOnlyRadio"
                                 android:layout_width="match_parent"
                                 android:layout_height="wrap_content"
-                                android:paddingVertical="8dp"
-                                android:text="仅使用 GPS"
-                                android:textSize="16sp"
-                                android:buttonTint="#006492"/>
+                                android:paddingVertical="6dp"
+                                android:text="@string/data_source_gps_only"
+                                android:textAppearance="?attr/textAppearanceBodyLarge" />
+
                             <com.google.android.material.radiobutton.MaterialRadioButton
                                 android:id="@+id/bydAutoRadio"
                                 android:layout_width="match_parent"
                                 android:layout_height="wrap_content"
-                                android:paddingVertical="8dp"
-                                android:text="智能切换 (优先 BYD 车机)"
-                                android:textSize="16sp"
-                                android:buttonTint="#006492"/>
+                                android:paddingVertical="6dp"
+                                android:text="@string/data_source_auto"
+                                android:textAppearance="?attr/textAppearanceBodyLarge" />
+
                             <com.google.android.material.radiobutton.MaterialRadioButton
                                 android:id="@+id/bydOnlyRadio"
                                 android:layout_width="match_parent"
                                 android:layout_height="wrap_content"
-                                android:paddingVertical="8dp"
-                                android:text="仅使用 BYD 车机"
-                                android:textSize="16sp"
-                                android:buttonTint="#006492"/>
+                                android:paddingVertical="6dp"
+                                android:text="@string/data_source_byd_only"
+                                android:textAppearance="?attr/textAppearanceBodyLarge" />
                         </RadioGroup>
 
                         <TextView
@@ -379,22 +411,20 @@
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
                             android:layout_marginTop="12dp"
-                            android:paddingStart="4dp"
-                            android:text="当前使用: GPS"
+                            android:text="@string/data_source_current_gps"
                             android:textAppearance="?attr/textAppearanceBodyMedium"
-                            android:textColor="#5E6066" />
+                            android:textColor="?attr/colorOnSurfaceVariant" />
 
                         <com.google.android.material.button.MaterialButton
                             android:id="@+id/permissionCheckButton"
                             style="@style/Widget.Material3.Button.TextButton"
-                            android:layout_width="match_parent"
-                            android:layout_height="56dp"
-                            android:layout_marginTop="8dp"
-                            android:text="系统权限自检"
-                            android:textSize="15sp"
-                            android:textColor="#006492"
-                            android:textAlignment="viewStart"/>
-
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="12dp"
+                            android:insetTop="0dp"
+                            android:insetBottom="0dp"
+                            android:minHeight="52dp"
+                            android:text="@string/permission_self_check" />
                     </LinearLayout>
                 </com.google.android.material.card.MaterialCardView>
             </LinearLayout>
@@ -404,11 +434,10 @@
     <androidx.constraintlayout.widget.ConstraintLayout
         android:id="@+id/logContainer"
         android:layout_width="match_parent"
-        android:layout_height="420dp" 
+        android:layout_height="360dp"
         android:background="@drawable/shape_bottom_sheet_bg"
-        android:backgroundTint="#111318"
         app:behavior_hideable="false"
-        app:behavior_peekHeight="72dp"
+        app:behavior_peekHeight="88dp"
         app:layout_behavior="com.google.android.material.bottomsheet.BottomSheetBehavior">
 
         <LinearLayout
@@ -423,43 +452,40 @@
                 android:id="@+id/dragHandle"
                 android:layout_width="32dp"
                 android:layout_height="4dp"
-                android:background="#44474E"
-                android:layout_marginTop="16dp"
                 android:layout_gravity="center_horizontal"
-                android:backgroundTint="#44474E"/>
+                android:layout_marginTop="16dp"
+                android:background="?attr/colorOutlineVariant" />
 
             <TextView
                 android:id="@+id/logTitle"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:text="System Console"
-                android:textColor="#C4C6D0"
-                android:textSize="13sp"
-                android:textStyle="bold"
-                android:letterSpacing="0.05"
                 android:layout_marginTop="16dp"
-                android:paddingHorizontal="24dp"/>
+                android:paddingHorizontal="24dp"
+                android:text="@string/log_title"
+                android:textAppearance="?attr/textAppearanceTitleMedium"
+                android:textColor="?attr/colorOnSurfaceInverse" />
         </LinearLayout>
 
         <ScrollView
             android:id="@+id/logScrollView"
             android:layout_width="match_parent"
             android:layout_height="0dp"
-            android:paddingHorizontal="24dp"
-            android:paddingBottom="16dp"
             android:layout_marginTop="4dp"
-            app:layout_constraintTop_toBottomOf="@id/logHeaderLayout"
-            app:layout_constraintBottom_toBottomOf="parent">
+            android:paddingHorizontal="24dp"
+            android:paddingBottom="20dp"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintTop_toBottomOf="@id/logHeaderLayout">
 
             <TextView
                 android:id="@+id/logTextView"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:text="> System initialized...\n> Ready to connect."
-                android:textColor="#8BE398"
-                android:textSize="13sp"
                 android:fontFamily="monospace"
-                android:lineSpacingMultiplier="1.2" />
+                android:lineSpacingExtra="4dp"
+                android:text="@string/log_initial"
+                android:textAppearance="?attr/textAppearanceBodyMedium"
+                android:textColor="?attr/colorOnSurfaceInverse" />
         </ScrollView>
 
     </androidx.constraintlayout.widget.ConstraintLayout>

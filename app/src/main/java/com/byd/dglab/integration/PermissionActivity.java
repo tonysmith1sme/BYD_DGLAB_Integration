@@ -1,8 +1,9 @@
 package com.byd.dglab.integration;
 
+import android.content.res.ColorStateList;
 import android.content.pm.PackageManager;
-import android.os.Build;
 import android.os.Bundle;
+import android.util.TypedValue;
 import android.widget.Button;
 import android.widget.LinearLayout;
 import android.widget.ScrollView;
@@ -12,6 +13,9 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
 import android.util.Log;
+import com.google.android.material.card.MaterialCardView;
+import com.google.android.material.color.DynamicColors;
+import com.google.android.material.color.MaterialColors;
 
 /**
  * 权限检查和授予活动
@@ -51,6 +55,7 @@ public class PermissionActivity extends AppCompatActivity {
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
+        DynamicColors.applyToActivityIfAvailable(this);
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_permission);
 
@@ -70,7 +75,7 @@ public class PermissionActivity extends AppCompatActivity {
         permissionScrollView = findViewById(R.id.permission_scroll_view);
 
         if (titleTextView != null) {
-            titleTextView.setText("权限检查和授予");
+            titleTextView.setText(R.string.permission_title);
         }
 
         if (requestPermissionsButton != null) {
@@ -91,10 +96,10 @@ public class PermissionActivity extends AppCompatActivity {
         }
 
         // 添加BYD权限
-        addPermissionSection("BYD车机系统权限", BYD_PERMISSIONS);
+        addPermissionSection(getString(R.string.permission_section_byd), BYD_PERMISSIONS);
 
         // 添加标准Android权限
-        addPermissionSection("标准权限", STANDARD_PERMISSIONS);
+        addPermissionSection(getString(R.string.permission_section_standard), STANDARD_PERMISSIONS);
 
         // 更新整体状态
         updateOverallStatus();
@@ -104,16 +109,14 @@ public class PermissionActivity extends AppCompatActivity {
      * 添加权限组
      */
     private void addPermissionSection(String sectionTitle, String[] permissions) {
-        // 添加章节标题
         TextView sectionTitleView = new TextView(this);
         sectionTitleView.setText(sectionTitle);
-        sectionTitleView.setTextSize(16);
+        sectionTitleView.setTextSize(TypedValue.COMPLEX_UNIT_SP, 16);
         sectionTitleView.setTypeface(null, android.graphics.Typeface.BOLD);
-        sectionTitleView.setPadding(16, 24, 16, 8);
-        sectionTitleView.setTextColor(getResources().getColor(android.R.color.black));
+        sectionTitleView.setPadding(0, 16, 0, 8);
+        sectionTitleView.setTextColor(MaterialColors.getColor(sectionTitleView, com.google.android.material.R.attr.colorOnSurface));
         permissionItemsContainer.addView(sectionTitleView);
 
-        // 添加权限项
         for (String permission : permissions) {
             addPermissionItem(permission);
         }
@@ -123,31 +126,57 @@ public class PermissionActivity extends AppCompatActivity {
      * 添加单个权限项
      */
     private void addPermissionItem(String permission) {
+        MaterialCardView itemCard = new MaterialCardView(this);
+        itemCard.setCardBackgroundColor(MaterialColors.getColor(itemCard, com.google.android.material.R.attr.colorSurfaceBright));
+        itemCard.setStrokeColor(MaterialColors.getColor(itemCard, com.google.android.material.R.attr.colorOutlineVariant));
+        itemCard.setStrokeWidth(dpToPx(1));
+        itemCard.setRadius(dpToPx(20));
+
         LinearLayout itemLayout = new LinearLayout(this);
         itemLayout.setOrientation(LinearLayout.HORIZONTAL);
-        itemLayout.setPadding(16, 12, 16, 12);
+        itemLayout.setPadding(dpToPx(16), dpToPx(14), dpToPx(16), dpToPx(14));
 
-        // 权限名称和状态
         TextView permissionView = new TextView(this);
         String description = PermissionUtils.getPermissionDescription(permission);
         boolean isGranted = ContextCompat.checkSelfPermission(this, permission) == PackageManager.PERMISSION_GRANTED;
         String statusText = isGranted ? "✓ " : "✗ ";
         permissionView.setText(statusText + description);
-        permissionView.setTextSize(14);
+        permissionView.setTextSize(TypedValue.COMPLEX_UNIT_SP, 14);
+        permissionView.setTextColor(MaterialColors.getColor(permissionView,
+            isGranted ? com.google.android.material.R.attr.colorPrimary : com.google.android.material.R.attr.colorError));
+
+        TextView chipView = new TextView(this);
+        chipView.setText(isGranted ? "已授权" : "待授权");
+        chipView.setTextSize(TypedValue.COMPLEX_UNIT_SP, 12);
+        chipView.setTypeface(null, android.graphics.Typeface.BOLD);
+        chipView.setPadding(dpToPx(12), dpToPx(6), dpToPx(12), dpToPx(6));
         if (isGranted) {
-            permissionView.setTextColor(getResources().getColor(android.R.color.holo_green_dark));
+            chipView.setBackgroundTintList(ColorStateList.valueOf(
+                MaterialColors.getColor(chipView, com.google.android.material.R.attr.colorPrimaryContainer)));
+            chipView.setTextColor(MaterialColors.getColor(chipView, com.google.android.material.R.attr.colorOnPrimaryContainer));
         } else {
-            permissionView.setTextColor(getResources().getColor(android.R.color.holo_red_dark));
+            chipView.setBackgroundTintList(ColorStateList.valueOf(
+                MaterialColors.getColor(chipView, com.google.android.material.R.attr.colorErrorContainer)));
+            chipView.setTextColor(MaterialColors.getColor(chipView, com.google.android.material.R.attr.colorOnErrorContainer));
         }
+        chipView.setBackgroundResource(R.drawable.shape_status_badge_rounded);
 
         LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(
-                LinearLayout.LayoutParams.MATCH_PARENT,
+            0,
                 LinearLayout.LayoutParams.WRAP_CONTENT
         );
-        params.setMargins(0, 4, 0, 4);
+        params.weight = 1f;
         itemLayout.addView(permissionView, params);
+        itemLayout.addView(chipView);
 
-        permissionItemsContainer.addView(itemLayout);
+        LinearLayout.LayoutParams cardParams = new LinearLayout.LayoutParams(
+            LinearLayout.LayoutParams.MATCH_PARENT,
+            LinearLayout.LayoutParams.WRAP_CONTENT
+        );
+        cardParams.setMargins(0, 0, 0, dpToPx(12));
+        itemCard.addView(itemLayout);
+
+        permissionItemsContainer.addView(itemCard, cardParams);
     }
 
     /**
@@ -158,25 +187,30 @@ public class PermissionActivity extends AppCompatActivity {
         boolean allStandardGranted = PermissionUtils.allPermissionsGranted(this, STANDARD_PERMISSIONS);
 
         String status;
+        int backgroundColor;
+        int textColor;
         if (allBydGranted && allStandardGranted) {
-            status = "✓ 所有权限已授予";
-            statusTextView.setTextColor(getResources().getColor(android.R.color.holo_green_dark));
+            status = getString(R.string.permission_all_granted);
+            backgroundColor = MaterialColors.getColor(statusTextView, com.google.android.material.R.attr.colorPrimaryContainer);
+            textColor = MaterialColors.getColor(statusTextView, com.google.android.material.R.attr.colorOnPrimaryContainer);
         } else {
-            status = "✗ 部分权限未授予";
-            statusTextView.setTextColor(getResources().getColor(android.R.color.holo_red_dark));
+            status = getString(R.string.permission_partial_missing);
+            backgroundColor = MaterialColors.getColor(statusTextView, com.google.android.material.R.attr.colorErrorContainer);
+            textColor = MaterialColors.getColor(statusTextView, com.google.android.material.R.attr.colorOnErrorContainer);
         }
 
         if (statusTextView != null) {
             statusTextView.setText(status);
+            statusTextView.setBackgroundTintList(ColorStateList.valueOf(backgroundColor));
+            statusTextView.setTextColor(textColor);
         }
 
-        // 根据权限状态更新按钮
         if (requestPermissionsButton != null) {
             if (allBydGranted && allStandardGranted) {
-                requestPermissionsButton.setText("权限检查完成");
+                requestPermissionsButton.setText(R.string.permission_check_complete);
                 requestPermissionsButton.setEnabled(false);
             } else {
-                requestPermissionsButton.setText("请求权限授予");
+                requestPermissionsButton.setText(R.string.permission_request_now);
                 requestPermissionsButton.setEnabled(true);
             }
         }
@@ -262,5 +296,13 @@ public class PermissionActivity extends AppCompatActivity {
             allPermissions.add(perm);
         }
         return allPermissions.toArray(new String[0]);
+    }
+
+    private int dpToPx(int dp) {
+        return Math.round(TypedValue.applyDimension(
+                TypedValue.COMPLEX_UNIT_DIP,
+                dp,
+                getResources().getDisplayMetrics()
+        ));
     }
 }
