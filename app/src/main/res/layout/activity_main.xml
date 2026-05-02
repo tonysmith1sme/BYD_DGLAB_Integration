@@ -17,8 +17,7 @@
             android:layout_height="wrap_content"
             android:background="?attr/colorSurface"
             android:fitsSystemWindows="true"
-            android:paddingHorizontal="8dp"
-            android:theme="@style/ThemeOverlay.Material3.Surface">
+            android:paddingHorizontal="8dp">
 
             <com.google.android.material.appbar.MaterialToolbar
                 android:id="@+id/topToolbar"
