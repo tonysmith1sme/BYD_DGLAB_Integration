@@ -10,6 +10,7 @@ import android.widget.Button;
 import android.widget.ScrollView;
 import android.widget.TextView;
 import android.widget.EditText;
+import android.text.TextUtils;
 import android.widget.Toast;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.app.AlertDialog;
@@ -18,8 +19,13 @@ import androidx.core.content.ContextCompat;
 import android.content.res.ColorStateList;
 import com.google.zxing.integration.android.IntentIntegrator;
 import com.google.zxing.integration.android.IntentResult;
-import com.google.android.material.color.MaterialColors;
 import com.google.android.material.color.DynamicColors;
+import com.google.android.material.color.MaterialColors;
+
+import java.net.URI;
+import java.net.URISyntaxException;
+import java.util.Locale;
+import java.util.Map;
 
 /**
  * 主活动类
@@ -56,7 +62,6 @@ public class MainActivity extends AppCompatActivity implements SpeedChangeListen
 
     // 权限请求码
     private static final int PERMISSION_REQUEST_CODE = 100;
-    private static final int QR_CODE_REQUEST_CODE = 101;
     private static final int BYD_PERMISSION_REQUEST_CODE = 102;
     private static final String PREFS_NAME = "WebSocketConfig";
     private static final String KEY_SERVER_URL = "server_url";
@@ -357,7 +362,7 @@ public class MainActivity extends AppCompatActivity implements SpeedChangeListen
      * 连接按钮点击事件
      */
     private void onConnectClicked(View view) {
-        addLogEntry("正在连接到DG-LAB服务器...");
+        addLogEntry("正在连接到 DG-LAB APP...");
         updateStatus("连接中...");
         connectButton.setEnabled(false);
 
@@ -398,7 +403,7 @@ public class MainActivity extends AppCompatActivity implements SpeedChangeListen
         // 启动ZXing二维码扫描
         IntentIntegrator integrator = new IntentIntegrator(this);
         integrator.setDesiredBarcodeFormats(IntentIntegrator.QR_CODE);
-        integrator.setPrompt("请扫描包含WebSocket地址的二维码");
+        integrator.setPrompt("请扫描包含手机 IP 或 WebSocket 地址的二维码");
         integrator.setCameraId(0);
         integrator.setBeepEnabled(true);
         integrator.setBarcodeImageEnabled(false);
@@ -411,20 +416,22 @@ public class MainActivity extends AppCompatActivity implements SpeedChangeListen
      * 应用WebSocket地址按钮点击事件
      */
     private void onApplyUrlClicked(View view) {
-        String url = serverUrlEditText.getText().toString().trim();
+        String url = normalizeWebSocketEndpoint(serverUrlEditText.getText().toString());
 
         if (url.isEmpty()) {
-            Toast.makeText(this, "请输入WebSocket地址", Toast.LENGTH_SHORT).show();
-            addLogEntry("错误：WebSocket地址为空");
+            Toast.makeText(this, "请输入 DG-LAB APP 地址", Toast.LENGTH_SHORT).show();
+            addLogEntry("错误：DG-LAB APP 地址为空");
             return;
         }
 
         // 验证URL格式
         if (!isValidWebSocketUrl(url)) {
-            Toast.makeText(this, "无效的WebSocket地址格式", Toast.LENGTH_SHORT).show();
-            addLogEntry("错误：无效的WebSocket地址 - " + url);
+            Toast.makeText(this, "无效的 DG-LAB APP 地址格式", Toast.LENGTH_SHORT).show();
+            addLogEntry("错误：无效的 DG-LAB APP 地址 - " + url);
             return;
         }
+
+        serverUrlEditText.setText(url);
 
         // 保存到SharedPreferences
         SharedPreferences.Editor editor = sharedPreferences.edit();
@@ -437,10 +444,10 @@ public class MainActivity extends AppCompatActivity implements SpeedChangeListen
                 webSocketService.disconnect();
             }
             webSocketService = new WebSocketService(this, url);
-            Toast.makeText(this, "WebSocket地址已更新", Toast.LENGTH_SHORT).show();
-            addLogEntry("WebSocket地址已保存并更新: " + url);
+            Toast.makeText(this, "DG-LAB APP 地址已更新", Toast.LENGTH_SHORT).show();
+            addLogEntry("DG-LAB APP 地址已保存并更新: " + url);
         } catch (Exception e) {
-            addLogEntry("更新WebSocket地址失败: " + e.getMessage());
+            addLogEntry("更新 DG-LAB APP 地址失败: " + e.getMessage());
             Log.e(TAG, "Error updating WebSocket service", e);
         }
     }
@@ -449,7 +456,48 @@ public class MainActivity extends AppCompatActivity implements SpeedChangeListen
      * 验证WebSocket地址格式
      */
     private boolean isValidWebSocketUrl(String url) {
-        return url.startsWith("ws://") || url.startsWith("wss://");
+        if (TextUtils.isEmpty(url)) {
+            return false;
+        }
+
+        try {
+            URI uri = new URI(url);
+            String scheme = uri.getScheme();
+            String host = uri.getHost();
+            return ("ws".equalsIgnoreCase(scheme) || "wss".equalsIgnoreCase(scheme))
+                    && !TextUtils.isEmpty(host)
+                    && uri.getPath().isEmpty();
+        } catch (URISyntaxException e) {
+            return false;
+        }
+    }
+
+    private String normalizeWebSocketEndpoint(String rawInput) {
+        if (rawInput == null) {
+            return "";
+        }
+
+        String value = rawInput.trim();
+        if (value.isEmpty()) {
+            return "";
+        }
+
+        if (value.startsWith("ws://") || value.startsWith("wss://")) {
+            return stripTrailingSlash(value);
+        }
+
+        if (value.startsWith("http://") || value.startsWith("https://")) {
+            return "";
+        }
+
+        return stripTrailingSlash(String.format(Locale.US, "ws://%s:%d", value, Constants.DG_LAB_APP_PORT));
+    }
+
+    private String stripTrailingSlash(String value) {
+        while (value.endsWith("/")) {
+            value = value.substring(0, value.length() - 1);
+        }
+        return value;
     }
 
     /**
@@ -480,8 +528,7 @@ public class MainActivity extends AppCompatActivity implements SpeedChangeListen
 
             // 发送控制命令（如果已连接）
             if (webSocketService.isConnected()) {
-                webSocketService.sendPulseCommand(Constants.CHANNEL_A, frequency, intensity);
-                webSocketService.sendPulseCommand(Constants.CHANNEL_B, frequency, intensity);
+                webSocketService.sendStrengthCommand(intensity, intensity);
             }
 
             // 获取当前数据源
@@ -514,17 +561,54 @@ public class MainActivity extends AppCompatActivity implements SpeedChangeListen
                     updateStatus("已连接");
                     connectButton.setEnabled(false);
                     disconnectButton.setEnabled(true);
-                    addLogEntry("成功连接到DG-LAB服务器");
+                    addLogEntry("成功连接到 DG-LAB APP，本地控制 API 已就绪");
                 } else if ("closed".equals(responseData)) {
                     updateStatus("未连接");
                     connectButton.setEnabled(true);
                     disconnectButton.setEnabled(false);
                     addLogEntry("连接已断开");
                 }
+            } else if ("queryStrength".equals(responseType)) {
+                handleStrengthQueryResponse(responseData);
+            } else if ("setStrength".equals(responseType)) {
+                handleSetStrengthResponse(responseData);
             } else {
                 addLogEntry("收到响应: " + responseType);
             }
         });
+    }
+
+    private void handleStrengthQueryResponse(String responseData) {
+        Map<String, Object> parsed = new SocketProtocolHelper().parseJsonResponse(responseData);
+        if (parsed == null) {
+            addLogEntry("强度查询响应解析失败");
+            return;
+        }
+
+        Object totalStrengthA = parsed.get("totalStrengthA");
+        Object totalStrengthB = parsed.get("totalStrengthB");
+        if (totalStrengthA instanceof Number && totalStrengthB instanceof Number) {
+            addLogEntry(String.format(Locale.US,
+                    "设备当前强度 A:%d B:%d",
+                    ((Number) totalStrengthA).intValue(),
+                    ((Number) totalStrengthB).intValue()));
+        }
+    }
+
+    private void handleSetStrengthResponse(String responseData) {
+        Map<String, Object> parsed = new SocketProtocolHelper().parseJsonResponse(responseData);
+        if (parsed == null) {
+            addLogEntry("设置强度响应解析失败");
+            return;
+        }
+
+        Object code = parsed.get("code");
+        if (code instanceof Number && ((Number) code).intValue() == 0) {
+            addLogEntry("强度设置成功");
+        } else {
+            Object result = parsed.get("result");
+            addLogEntry("强度设置失败: " + (result != null ? result : responseData));
+        }
     }
 
     /**
@@ -641,18 +725,16 @@ public class MainActivity extends AppCompatActivity implements SpeedChangeListen
                 String qrContent = result.getContents();
                 addLogEntry("二维码内容: " + qrContent);
 
-                // 检查是否是WebSocket地址
-                if (isValidWebSocketUrl(qrContent)) {
-                    serverUrlEditText.setText(qrContent);
-                    Toast.makeText(this, "已识别WebSocket地址，点击'应用'保存", Toast.LENGTH_LONG).show();
-                    addLogEntry("识别到有效的WebSocket地址");
-                } else if (qrContent.startsWith("http://") || qrContent.startsWith("https://")) {
-                    // 可能是包含WebSocket地址的URL
-                    Toast.makeText(this, "请手动修改为ws://或wss://前缀", Toast.LENGTH_SHORT).show();
-                    serverUrlEditText.setText(qrContent);
-                    addLogEntry("识别到URL，需要修改为WebSocket地址");
+                String normalizedEndpoint = normalizeWebSocketEndpoint(qrContent);
+                if (isValidWebSocketUrl(normalizedEndpoint)) {
+                    serverUrlEditText.setText(normalizedEndpoint);
+                    Toast.makeText(this, "已识别 DG-LAB APP 地址，点击“应用地址”保存", Toast.LENGTH_LONG).show();
+                    addLogEntry("识别到有效的 DG-LAB APP 地址: " + normalizedEndpoint);
+                } else if (qrContent.contains("DGLAB-SOCKET#")) {
+                    Toast.makeText(this, "这是给 DG-LAB APP 扫描的控制端二维码，当前应用不应扫描它", Toast.LENGTH_LONG).show();
+                    addLogEntry("检测到控制端配对二维码：应由 DG-LAB APP 扫描，而不是当前应用扫描");
                 } else {
-                    Toast.makeText(this, "二维码内容不是有效的WebSocket地址", Toast.LENGTH_SHORT).show();
+                    Toast.makeText(this, "二维码内容不是有效的 DG-LAB APP 地址", Toast.LENGTH_SHORT).show();
                     addLogEntry("二维码内容无效: " + qrContent);
                 }
             }

@@ -8,8 +8,8 @@
     <string name="intensity_label">强度</string>
     <string name="frequency_unit">Hz</string>
     <string name="connection_title">连接控制</string>
-    <string name="connection_subtitle">配置 DG-LAB WebSocket 地址并管理当前会话</string>
-    <string name="server_url_hint">WebSocket 地址</string>
+    <string name="connection_subtitle">连接 DG-LAB APP 本地控制接口并管理当前会话</string>
+    <string name="server_url_hint">DG-LAB APP 地址或手机 IP</string>
     <string name="scan_qr">扫码导入</string>
     <string name="apply_address">应用地址</string>
     <string name="connect_action">连接设备</string>
