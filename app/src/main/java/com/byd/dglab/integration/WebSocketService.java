@@ -10,7 +10,7 @@ import java.util.Map;
 
 /**
  * WebSocket服务
- * 负责与DG-LAB SOCKET服务器建立连接并发送控制命令
+ * 负责与 DG-LAB APP 本地 WebSocket API 建立连接并发送控制命令
  */
 public class WebSocketService {
 
@@ -25,6 +25,8 @@ public class WebSocketService {
     private boolean isConnected = false;
     private int reconnectAttempts = 0;
     private boolean isReconnecting = false;
+    private int lastStrengthA = Integer.MIN_VALUE;
+    private int lastStrengthB = Integer.MIN_VALUE;
 
     public WebSocketService(ControlCommandListener listener) {
         this(listener, Constants.SOCKET_SERVER_URL);
@@ -38,7 +40,7 @@ public class WebSocketService {
     }
 
     /**
-     * 连接到DG-LAB服务器
+    * 连接到 DG-LAB APP
      */
     public void connect() {
         try {
@@ -56,9 +58,7 @@ public class WebSocketService {
                     isConnected = true;
                     reconnectAttempts = 0;
                     isReconnecting = false;
-
-                    // 发送心跳开始
-                    startHeartbeat();
+                    queryStrength(true);
 
                     // 通知监听器
                     if (listener != null) {
@@ -82,6 +82,9 @@ public class WebSocketService {
                         handler.post(() -> listener.onResponseReceived("connection", "closed"));
                     }
 
+                    lastStrengthA = Integer.MIN_VALUE;
+                    lastStrengthB = Integer.MIN_VALUE;
+
                     // 自动重连
                     if (!isReconnecting && reconnectAttempts < Constants.MAX_RECONNECT_ATTEMPTS) {
                         scheduleReconnect();
@@ -99,11 +102,10 @@ public class WebSocketService {
                 }
             };
 
-            // 设置连接超时
-            webSocketClient.setConnectionLostTimeout(0);
+            webSocketClient.setConnectionLostTimeout(60);
             webSocketClient.connect();
 
-            Log.d(TAG, "Connecting to DG-LAB server...");
+            Log.d(TAG, "Connecting to DG-LAB APP: " + serverUrl);
 
         } catch (Exception e) {
             Log.e(TAG, "Error connecting to WebSocket", e);
@@ -124,7 +126,8 @@ public class WebSocketService {
             }
             isConnected = false;
             isReconnecting = false;
-            stopHeartbeat();
+            lastStrengthA = Integer.MIN_VALUE;
+            lastStrengthB = Integer.MIN_VALUE;
 
             Log.d(TAG, "WebSocket disconnected");
 
@@ -134,38 +137,31 @@ public class WebSocketService {
     }
 
     /**
-     * 发送强度控制命令
-     * @param channel 通道（A或B）
-     * @param intensity 强度值（0-200）
+     * 发送双通道强度控制命令
      */
-    public void sendIntensityCommand(String channel, int intensity) {
-        String command = protocolHelper.generateStrengthCommand(channel, intensity);
+    public void sendStrengthCommand(int strengthA, int strengthB) {
+        int safeStrengthA = Math.max(Constants.INTENSITY_MIN, Math.min(Constants.INTENSITY_MAX, strengthA));
+        int safeStrengthB = Math.max(Constants.INTENSITY_MIN, Math.min(Constants.INTENSITY_MAX, strengthB));
+
+        if (safeStrengthA == lastStrengthA && safeStrengthB == lastStrengthB) {
+            return;
+        }
+
+        String command = protocolHelper.generateSetStrengthCommand(safeStrengthA, safeStrengthB);
         if (command != null) {
-            sendCommand("strength", command);
+            lastStrengthA = safeStrengthA;
+            lastStrengthB = safeStrengthB;
+            sendCommand("setStrength", command);
         }
     }
 
     /**
-     * 发送脉冲控制命令
-     * @param channel 通道（A或B）
-     * @param frequency 频率（Hz）
-     * @param intensity 强度值（0-200）
+     * 查询当前强度
      */
-    public void sendPulseCommand(String channel, int frequency, int intensity) {
-        String command = protocolHelper.generatePulseCommand(channel, frequency, intensity);
+    public void queryStrength(boolean silent) {
+        String command = protocolHelper.generateQueryStrengthCommand(silent);
         if (command != null) {
-            sendCommand("pulse", command);
-        }
-    }
-
-    /**
-     * 发送二维码绑定命令
-     * @param qrCode 二维码字符串
-     */
-    public void sendQrCodeCommand(String qrCode) {
-        String command = protocolHelper.generateQrCodeCommand(qrCode);
-        if (command != null) {
-            sendCommand("qrCode", command);
+            sendCommand(silent ? "queryStrengthSilent" : "queryStrength", command);
         }
     }
 
@@ -207,20 +203,31 @@ public class WebSocketService {
     private void handleIncomingMessage(String message) {
         try {
             Map<String, Object> parsedResponse = protocolHelper.parseJsonResponse(message);
-            if (parsedResponse != null) {
-                String responseType = (String) parsedResponse.get("type");
+            if (parsedResponse == null) {
+                return;
+            }
 
-                // 通知监听器
-                if (listener != null) {
-                    handler.post(() -> listener.onResponseReceived(responseType, message));
+            Object idObject = parsedResponse.get("id");
+            int responseId = idObject instanceof Number ? ((Number) idObject).intValue() : -1;
+
+            if (listener != null) {
+                String responseType;
+                switch (responseId) {
+                    case Constants.API_ID_QUERY_STRENGTH:
+                    case Constants.API_ID_QUERY_STRENGTH_SILENT:
+                        responseType = "queryStrength";
+                        break;
+                    case Constants.API_ID_SET_STRENGTH:
+                        responseType = "setStrength";
+                        break;
+                    default:
+                        responseType = parsedResponse.containsKey("type")
+                                ? String.valueOf(parsedResponse.get("type"))
+                                : "api";
+                        break;
                 }
 
-                // 处理特定响应类型
-                if ("error".equals(responseType)) {
-                    Log.w(TAG, "Server error response: " + message);
-                } else if ("heartbeat".equals(responseType)) {
-                    Log.d(TAG, "Heartbeat response received");
-                }
+                handler.post(() -> listener.onResponseReceived(responseType, message));
             }
 
         } catch (Exception e) {
@@ -248,32 +255,6 @@ public class WebSocketService {
                 isReconnecting = false;
             }
         }, Constants.RECONNECT_INTERVAL_MS);
-    }
-
-    /**
-     * 开始心跳
-     */
-    private void startHeartbeat() {
-        handler.postDelayed(new Runnable() {
-            @Override
-            public void run() {
-                if (isConnected) {
-                    String heartbeatCommand = protocolHelper.generateHeartbeatCommand();
-                    if (heartbeatCommand != null) {
-                        sendCommand("heartbeat", heartbeatCommand);
-                    }
-                    // 每30秒发送一次心跳
-                    handler.postDelayed(this, 30000);
-                }
-            }
-        }, 30000);
-    }
-
-    /**
-     * 停止心跳
-     */
-    private void stopHeartbeat() {
-        // 心跳会自动停止，因为isConnected为false
     }
 
     /**

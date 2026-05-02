@@ -3,12 +3,13 @@ package com.byd.dglab.integration;
 import android.util.Log;
 import com.google.gson.Gson;
 import com.google.gson.JsonObject;
+import com.google.gson.JsonElement;
 import java.util.HashMap;
 import java.util.Map;
 
 /**
- * SOCKET协议助手类
- * 负责生成符合DG-LAB SOCKET V3协议的JSON命令和蓝牙指令
+ * DG-LAB协议助手类
+ * 负责生成与 DG-LAB APP 本地 WebSocket API 兼容的请求
  */
 public class SocketProtocolHelper {
 
@@ -20,103 +21,63 @@ public class SocketProtocolHelper {
     }
 
     /**
-     * 生成强度控制命令
-     * @param channel 通道（A或B）
-     * @param intensity 强度值（0-200）
-     * @return JSON命令字符串
+     * 生成设置双通道强度命令
      */
-    public String generateStrengthCommand(String channel, int intensity) {
+    public String generateSetStrengthCommand(int strengthA, int strengthB) {
         try {
-            JsonObject command = new JsonObject();
-            command.addProperty("type", Constants.MSG_TYPE_STRENGTH);
+            JsonObject requestData = new JsonObject();
+            requestData.addProperty("strengthA", normalizeStrengthForDevice(strengthA));
+            requestData.addProperty("strengthB", normalizeStrengthForDevice(strengthB));
 
-            JsonObject data = new JsonObject();
-            data.addProperty("channel", channel);
-            data.addProperty("intensity", Math.max(Constants.INTENSITY_MIN,
-                    Math.min(Constants.INTENSITY_MAX, intensity)));
+            JsonObject request = new JsonObject();
+            request.addProperty("id", Constants.API_ID_SET_STRENGTH);
+            request.addProperty("method", Constants.API_METHOD_SET_STRENGTH);
+            request.add("data", requestData);
 
-            command.add("data", data);
-
-            String jsonCommand = gson.toJson(command);
-            Log.d(TAG, "Generated strength command: " + jsonCommand);
-            return jsonCommand;
+            String jsonRequest = gson.toJson(request);
+            Log.d(TAG, "Generated setStrength command: " + jsonRequest);
+            return jsonRequest;
 
         } catch (Exception e) {
-            Log.e(TAG, "Error generating strength command", e);
+            Log.e(TAG, "Error generating setStrength command", e);
             return null;
         }
     }
 
     /**
-     * 生成脉冲控制命令
-     * @param channel 通道（A或B）
-     * @param frequency 频率（Hz）
-     * @param intensity 强度值（0-200）
-     * @return JSON命令字符串
+     * 生成查询强度命令
      */
-    public String generatePulseCommand(String channel, int frequency, int intensity) {
+    public String generateQueryStrengthCommand(boolean silent) {
         try {
-            JsonObject command = new JsonObject();
-            command.addProperty("type", Constants.MSG_TYPE_PULSE);
+            JsonObject request = new JsonObject();
+            request.addProperty("id", silent
+                    ? Constants.API_ID_QUERY_STRENGTH_SILENT
+                    : Constants.API_ID_QUERY_STRENGTH);
+            request.addProperty("method", Constants.API_METHOD_QUERY_STRENGTH);
 
-            JsonObject data = new JsonObject();
-            data.addProperty("channel", channel);
-            data.addProperty("frequency", Math.max(Constants.FREQUENCY_MIN,
-                    Math.min(Constants.FREQUENCY_MAX, frequency)));
-            data.addProperty("intensity", Math.max(Constants.INTENSITY_MIN,
-                    Math.min(Constants.INTENSITY_MAX, intensity)));
-
-            command.add("data", data);
-
-            String jsonCommand = gson.toJson(command);
-            Log.d(TAG, "Generated pulse command: " + jsonCommand);
-            return jsonCommand;
+            String jsonRequest = gson.toJson(request);
+            Log.d(TAG, "Generated queryStrength command: " + jsonRequest);
+            return jsonRequest;
 
         } catch (Exception e) {
-            Log.e(TAG, "Error generating pulse command", e);
+            Log.e(TAG, "Error generating queryStrength command", e);
             return null;
         }
     }
 
     /**
-     * 生成二维码绑定命令
-     * @param qrCode 二维码字符串
-     * @return JSON命令字符串
+     * 将业务强度转换为 DG-LAB 设备强度
      */
-    public String generateQrCodeCommand(String qrCode) {
-        try {
-            JsonObject command = new JsonObject();
-            command.addProperty("type", Constants.MSG_TYPE_QR_CODE);
-            command.addProperty("data", qrCode);
-
-            String jsonCommand = gson.toJson(command);
-            Log.d(TAG, "Generated QR code command: " + jsonCommand);
-            return jsonCommand;
-
-        } catch (Exception e) {
-            Log.e(TAG, "Error generating QR code command", e);
-            return null;
-        }
+    public int normalizeStrengthForDevice(int strength) {
+        int clamped = Math.max(Constants.INTENSITY_MIN, Math.min(Constants.INTENSITY_MAX, strength));
+        return clamped == 0 ? 0 : clamped + Constants.DG_LAB_STRENGTH_OFFSET;
     }
 
     /**
-     * 生成心跳命令
-     * @return JSON命令字符串
+     * 将 DG-LAB 设备强度转换为业务强度
      */
-    public String generateHeartbeatCommand() {
-        try {
-            JsonObject command = new JsonObject();
-            command.addProperty("type", Constants.MSG_TYPE_HEARTBEAT);
-            command.addProperty("timestamp", System.currentTimeMillis());
-
-            String jsonCommand = gson.toJson(command);
-            Log.d(TAG, "Generated heartbeat command: " + jsonCommand);
-            return jsonCommand;
-
-        } catch (Exception e) {
-            Log.e(TAG, "Error generating heartbeat command", e);
-            return null;
-        }
+    public int normalizeStrengthFromDevice(int strength) {
+        return strength == 0 ? 0 : Math.max(0, strength - Constants.DG_LAB_STRENGTH_OFFSET);
     }
 
     /**
@@ -218,27 +179,55 @@ public class SocketProtocolHelper {
     }
 
     /**
-     * 解析接收到的JSON响应
-     * @param jsonResponse JSON响应字符串
-     * @return 解析后的数据映射
+     * 解析接收到的 JSON 响应
      */
     public Map<String, Object> parseJsonResponse(String jsonResponse) {
         try {
             Map<String, Object> result = new HashMap<>();
             JsonObject response = gson.fromJson(jsonResponse, JsonObject.class);
 
+            if (response == null) {
+                return null;
+            }
+
+            if (response.has("id")) {
+                result.put("id", response.get("id").getAsInt());
+            }
+
+            if (response.has("code")) {
+                result.put("code", response.get("code").getAsInt());
+            }
+
+            if (response.has("method")) {
+                result.put("method", response.get("method").getAsString());
+            }
+
+            if (response.has("result")) {
+                result.put("result", response.get("result").getAsString());
+            }
+
+            if (response.has("message")) {
+                result.put("message", response.get("message").getAsString());
+            }
+
             if (response.has("type")) {
                 result.put("type", response.get("type").getAsString());
             }
 
-            if (response.has("data")) {
-                // 根据不同类型解析data字段
+            if (response.has("data") && response.get("data").isJsonObject()) {
                 JsonObject data = response.getAsJsonObject("data");
                 result.put("data", data);
-            }
 
-            if (response.has("error")) {
-                result.put("error", response.get("error").getAsString());
+                if (data.has("totalStrengthA")) {
+                    result.put("totalStrengthA", normalizeStrengthFromDevice(data.get("totalStrengthA").getAsInt()));
+                }
+
+                if (data.has("totalStrengthB")) {
+                    result.put("totalStrengthB", normalizeStrengthFromDevice(data.get("totalStrengthB").getAsInt()));
+                }
+            } else if (response.has("data")) {
+                JsonElement data = response.get("data");
+                result.put("data", data);
             }
 
             Log.d(TAG, "Parsed response: " + result);

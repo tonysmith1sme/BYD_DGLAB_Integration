@@ -7,8 +7,11 @@ package com.byd.dglab.integration;
 public class Constants {
 
     // ==================== 网络配置 ====================
-    /** DG-LAB SOCKET服务器地址 */
-    public static final String SOCKET_SERVER_URL = "wss://ws.dg-lab.cn:8443";
+    /** DG-LAB APP直连地址（请替换为手机实际IP） */
+    public static final String SOCKET_SERVER_URL = "ws://192.168.1.1:23301";
+
+    /** DG-LAB APP本地控制端口 */
+    public static final int DG_LAB_APP_PORT = 23301;
 
     /** 连接超时时间（毫秒） */
     public static final int CONNECTION_TIMEOUT_MS = 10000;
@@ -67,17 +70,23 @@ public class Constants {
     public static final int[] HIGH_SPEED_FREQUENCY_RANGE = {80, 150};
 
     // ==================== 协议常量 ====================
-    /** 消息类型：强度控制 */
-    public static final String MSG_TYPE_STRENGTH = "strength";
+    /** 查询强度请求ID */
+    public static final int API_ID_QUERY_STRENGTH = 100001;
 
-    /** 消息类型：脉冲控制 */
-    public static final String MSG_TYPE_PULSE = "pulse";
+    /** 静默查询强度请求ID */
+    public static final int API_ID_QUERY_STRENGTH_SILENT = 100000;
 
-    /** 消息类型：二维码绑定 */
-    public static final String MSG_TYPE_QR_CODE = "qrCode";
+    /** 设置强度请求ID */
+    public static final int API_ID_SET_STRENGTH = 100002;
 
-    /** 消息类型：心跳 */
-    public static final String MSG_TYPE_HEARTBEAT = "heartbeat";
+    /** 强度查询方法名 */
+    public static final String API_METHOD_QUERY_STRENGTH = "queryStrength";
+
+    /** 强度设置方法名 */
+    public static final String API_METHOD_SET_STRENGTH = "setStrength";
+
+    /** DG-LAB设备实际强度偏移 */
+    public static final int DG_LAB_STRENGTH_OFFSET = 9;
 
     /** 通道A标识 */
     public static final String CHANNEL_A = "A";
