@@ -237,6 +237,14 @@ public class SocketProtocolHelper {
                 result.put("type", response.get("type").getAsString());
             }
 
+            if (response.has("clientId")) {
+                result.put("clientId", response.get("clientId").getAsString());
+            }
+
+            if (response.has("targetId")) {
+                result.put("targetId", response.get("targetId").getAsString());
+            }
+
             if (response.has("data") && response.get("data").isJsonObject()) {
                 JsonObject data = response.getAsJsonObject("data");
                 result.put("data", data);

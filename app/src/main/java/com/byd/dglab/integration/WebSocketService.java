@@ -214,7 +214,10 @@ public class WebSocketService {
                 String responseType = parsedResponse.containsKey("type")
                         ? String.valueOf(parsedResponse.get("type"))
                         : "api";
-                handler.post(() -> listener.onResponseReceived(responseType, message));
+                handler.post(() -> {
+                    listener.onResponseReceived("diagnostic", "raw message: " + message);
+                    listener.onResponseReceived(responseType, message);
+                });
             }
 
         } catch (Exception e) {
@@ -350,6 +353,26 @@ public class WebSocketService {
                         + ", controllerMatches=" + controllerMatches
                         + ", appIdMatches=" + appIdMatches);
 
+                if (clientId.isEmpty() || targetId.isEmpty()) {
+                    String reason = Constants.RESULT_INVALID_PAYLOAD;
+                    Log.w(TAG, "Bind rejected. clientId=" + clientId
+                            + ", targetId=" + targetId
+                            + ", requestedControllerId=" + requestedControllerId
+                            + ", controllerClientId=" + controllerClientId
+                            + ", attachedAppId=" + attachedAppId);
+                    if (listener != null) {
+                        String finalReason = reason;
+                        handler.post(() -> listener.onResponseReceived("diagnostic",
+                                "bind rejected: clientId=" + clientId + ", targetId=" + targetId + ", reason=" + finalReason));
+                    }
+
+                    String error = protocolHelper.generateErrorMessage(clientId, targetId, reason);
+                    if (error != null) {
+                        conn.send(error);
+                    }
+                    return;
+                }
+
                 if (!controllerMatches || !appIdMatches) {
                     String reason = !appIdMatches ? Constants.RESULT_TARGET_NOT_FOUND : Constants.RESULT_NOT_PAIRED;
                     Log.w(TAG, "Bind rejected. clientId=" + clientId
@@ -363,7 +386,7 @@ public class WebSocketService {
                                 "bind rejected: clientId=" + clientId + ", targetId=" + targetId + ", reason=" + finalReason));
                     }
 
-                    String error = protocolHelper.generateBindMessage("", "", reason);
+                    String error = protocolHelper.generateBindMessage(clientId, targetId, reason);
                     if (error != null) {
                         conn.send(error);
                     }
