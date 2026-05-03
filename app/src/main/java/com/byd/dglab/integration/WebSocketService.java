@@ -38,6 +38,16 @@ public class WebSocketService {
     private WebSocket pairedSocket;
     private String qrCodeContent;
 
+    private static class ClientSession {
+        final String appClientId;
+        final String requestedControllerId;
+
+        ClientSession(String appClientId, String requestedControllerId) {
+            this.appClientId = appClientId;
+            this.requestedControllerId = requestedControllerId;
+        }
+    }
+
     public WebSocketService(ControlCommandListener listener) {
         this(listener, Constants.SOCKET_SERVER_URL);
     }
@@ -281,12 +291,15 @@ public class WebSocketService {
         @Override
         public void onOpen(WebSocket conn, ClientHandshake handshake) {
             String appClientId = UUID.randomUUID().toString();
-            conn.setAttachment(appClientId);
+            String requestedControllerId = extractControllerIdFromPath(handshake.getResourceDescriptor());
+            conn.setAttachment(new ClientSession(appClientId, requestedControllerId));
             String bindMessage = protocolHelper.generateBindMessage(appClientId, "", "targetId");
             if (bindMessage != null) {
                 conn.send(bindMessage);
             }
-            Log.d(TAG, "App connected: " + appClientId + " path=" + handshake.getResourceDescriptor());
+            Log.d(TAG, "App connected: appClientId=" + appClientId
+                    + ", requestedControllerId=" + requestedControllerId
+                    + ", path=" + handshake.getResourceDescriptor());
         }
 
         @Override
@@ -320,8 +333,23 @@ public class WebSocketService {
             String targetId = parsed.containsKey("targetId") ? String.valueOf(parsed.get("targetId")) : "";
 
             if (Constants.MSG_TYPE_BIND.equals(type)) {
-                String attachedAppId = conn.getAttachment();
-                if (controllerClientId == null || !controllerClientId.equals(clientId) || !attachedAppId.equals(targetId)) {
+                ClientSession session = conn.getAttachment();
+                String attachedAppId = session != null ? session.appClientId : null;
+                String requestedControllerId = session != null ? session.requestedControllerId : null;
+
+                boolean controllerIdMatches = requestedControllerId != null && requestedControllerId.equals(clientId);
+                boolean appIdMatches = attachedAppId != null && attachedAppId.equals(targetId);
+
+                if (!controllerIdMatches && controllerClientId != null) {
+                    controllerIdMatches = controllerClientId.equals(clientId);
+                }
+
+                if (!controllerIdMatches || !appIdMatches) {
+                    Log.w(TAG, "Bind rejected. clientId=" + clientId
+                            + ", targetId=" + targetId
+                            + ", requestedControllerId=" + requestedControllerId
+                            + ", controllerClientId=" + controllerClientId
+                            + ", attachedAppId=" + attachedAppId);
                     String error = protocolHelper.generateBindMessage(clientId, targetId, Constants.RESULT_TARGET_NOT_FOUND);
                     if (error != null) {
                         conn.send(error);
@@ -363,6 +391,28 @@ public class WebSocketService {
         @Override
         public void onStart() {
             Log.d(TAG, "Local server started");
+        }
+
+        private String extractControllerIdFromPath(String resourceDescriptor) {
+            if (resourceDescriptor == null || resourceDescriptor.isEmpty() || "/".equals(resourceDescriptor)) {
+                return null;
+            }
+
+            String normalized = resourceDescriptor;
+            int queryIndex = normalized.indexOf('?');
+            if (queryIndex >= 0) {
+                normalized = normalized.substring(0, queryIndex);
+            }
+
+            if (normalized.startsWith("/")) {
+                normalized = normalized.substring(1);
+            }
+
+            if (normalized.endsWith("/")) {
+                normalized = normalized.substring(0, normalized.length() - 1);
+            }
+
+            return normalized.isEmpty() ? null : normalized;
         }
     }
 }
