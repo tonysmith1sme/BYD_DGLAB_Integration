@@ -8,12 +8,12 @@
     <string name="intensity_label">强度</string>
     <string name="frequency_unit">Hz</string>
     <string name="connection_title">连接控制</string>
-    <string name="connection_subtitle">连接 DG-LAB APP 本地控制接口并管理当前会话</string>
-    <string name="server_url_hint">DG-LAB APP 地址或手机 IP</string>
-    <string name="scan_qr">扫码导入</string>
+    <string name="connection_subtitle">在局域网内启动控制服务，并生成二维码供 DG-LAB APP 扫描</string>
+    <string name="server_url_hint">局域网地址或端口，例如 0.0.0.0:9999</string>
+    <string name="scan_qr">刷新二维码</string>
     <string name="apply_address">应用地址</string>
-    <string name="connect_action">连接设备</string>
-    <string name="disconnect_action">断开连接</string>
+    <string name="connect_action">启动服务</string>
+    <string name="disconnect_action">停止服务</string>
     <string name="status_disconnected">未连接</string>
     <string name="status_connecting">连接中</string>
     <string name="status_connected">已连接</string>
@@ -51,4 +51,8 @@
     <string name="root_grant_success">Root 权限授予成功</string>
     <string name="root_grant_failed">Root 权限授予失败，请检查 Root 状态</string>
     <string name="root_not_available">设备未检测到 Root 权限</string>
+    <string name="qr_code_preview">DG-LAB 配对二维码</string>
+    <string name="qr_hint_idle">启动服务后会在此显示二维码</string>
+    <string name="qr_hint_ready">请使用 DG-LAB APP 扫描此二维码完成配对</string>
+    <string name="qr_hint_connected">DG-LAB APP 已完成扫码配对</string>
 </resources>

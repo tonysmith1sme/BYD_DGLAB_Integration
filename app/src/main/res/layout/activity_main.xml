@@ -341,6 +341,25 @@
                                 android:minHeight="56dp"
                                 android:text="@string/disconnect_action" />
                         </LinearLayout>
+
+                        <ImageView
+                            android:id="@+id/qrCodeImageView"
+                            android:layout_width="220dp"
+                            android:layout_height="220dp"
+                            android:layout_gravity="center_horizontal"
+                            android:layout_marginTop="20dp"
+                            android:contentDescription="@string/qr_code_preview"
+                            android:scaleType="fitCenter" />
+
+                        <TextView
+                            android:id="@+id/qrHintTextView"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="12dp"
+                            android:gravity="center"
+                            android:text="@string/qr_hint_idle"
+                            android:textAppearance="?attr/textAppearanceBodyMedium"
+                            android:textColor="?attr/colorOnSurfaceVariant" />
                     </LinearLayout>
                 </com.google.android.material.card.MaterialCardView>
 

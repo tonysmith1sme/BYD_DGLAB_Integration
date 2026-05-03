@@ -3,6 +3,7 @@ package com.byd.dglab.integration;
 import android.Manifest;
 import android.content.pm.PackageManager;
 import android.content.SharedPreferences;
+import android.graphics.Bitmap;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
@@ -21,6 +22,10 @@ import com.google.zxing.integration.android.IntentIntegrator;
 import com.google.zxing.integration.android.IntentResult;
 import com.google.android.material.color.DynamicColors;
 import com.google.android.material.color.MaterialColors;
+import com.google.zxing.BarcodeFormat;
+import com.google.zxing.WriterException;
+import com.google.zxing.common.BitMatrix;
+import com.google.zxing.qrcode.QRCodeWriter;
 
 import java.net.URI;
 import java.net.URISyntaxException;
@@ -41,7 +46,9 @@ public class MainActivity extends AppCompatActivity implements SpeedChangeListen
     private TextView frequencyTextView;
     private TextView statusTextView;
     private TextView logTextView;
+    private TextView qrHintTextView;
     private ScrollView logScrollView;
+    private android.widget.ImageView qrCodeImageView;
     private Button connectButton;
     private Button disconnectButton;
     private EditText serverUrlEditText;
@@ -202,6 +209,8 @@ public class MainActivity extends AppCompatActivity implements SpeedChangeListen
         serverUrlEditText = findViewById(R.id.serverUrlEditText);
         scanQrButton = findViewById(R.id.scanQrButton);
         applyUrlButton = findViewById(R.id.applyUrlButton);
+        qrCodeImageView = findViewById(R.id.qrCodeImageView);
+        qrHintTextView = findViewById(R.id.qrHintTextView);
         permissionCheckButton = findViewById(R.id.permissionCheckButton);
         dataSourceRadioGroup = findViewById(R.id.dataSourceRadioGroup);
         gpsOnlyRadio = findViewById(R.id.gpsOnlyRadio);
@@ -236,6 +245,7 @@ public class MainActivity extends AppCompatActivity implements SpeedChangeListen
 
         // 初始状态
         updateStatus("未连接");
+        disconnectButton.setEnabled(false);
         addLogEntry("应用启动");
     }
 
@@ -362,7 +372,7 @@ public class MainActivity extends AppCompatActivity implements SpeedChangeListen
      * 连接按钮点击事件
      */
     private void onConnectClicked(View view) {
-        addLogEntry("正在连接到 DG-LAB APP...");
+        addLogEntry("正在启动本地控制服务...");
         updateStatus("连接中...");
         connectButton.setEnabled(false);
 
@@ -394,22 +404,8 @@ public class MainActivity extends AppCompatActivity implements SpeedChangeListen
      * 二维码扫描按钮点击事件
      */
     private void onScanQrClicked(View view) {
-        // 检查相机权限
-        if (ContextCompat.checkSelfPermission(this, Manifest.permission.CAMERA) != PackageManager.PERMISSION_GRANTED) {
-            ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.CAMERA}, PERMISSION_REQUEST_CODE);
-            return;
-        }
-
-        // 启动ZXing二维码扫描
-        IntentIntegrator integrator = new IntentIntegrator(this);
-        integrator.setDesiredBarcodeFormats(IntentIntegrator.QR_CODE);
-        integrator.setPrompt("请扫描包含手机 IP 或 WebSocket 地址的二维码");
-        integrator.setCameraId(0);
-        integrator.setBeepEnabled(true);
-        integrator.setBarcodeImageEnabled(false);
-        integrator.initiateScan();
-
-        addLogEntry("正在打开二维码扫描...");
+        renderQrCode(webSocketService.getQrCodeContent());
+        addLogEntry("已刷新配对二维码");
     }
 
     /**
@@ -419,15 +415,15 @@ public class MainActivity extends AppCompatActivity implements SpeedChangeListen
         String url = normalizeWebSocketEndpoint(serverUrlEditText.getText().toString());
 
         if (url.isEmpty()) {
-            Toast.makeText(this, "请输入 DG-LAB APP 地址", Toast.LENGTH_SHORT).show();
-            addLogEntry("错误：DG-LAB APP 地址为空");
+            Toast.makeText(this, "请输入局域网服务地址或端口", Toast.LENGTH_SHORT).show();
+            addLogEntry("错误：局域网服务地址为空");
             return;
         }
 
         // 验证URL格式
         if (!isValidWebSocketUrl(url)) {
-            Toast.makeText(this, "无效的 DG-LAB APP 地址格式", Toast.LENGTH_SHORT).show();
-            addLogEntry("错误：无效的 DG-LAB APP 地址 - " + url);
+            Toast.makeText(this, "无效的局域网服务地址格式", Toast.LENGTH_SHORT).show();
+            addLogEntry("错误：无效的局域网服务地址 - " + url);
             return;
         }
 
@@ -444,10 +440,10 @@ public class MainActivity extends AppCompatActivity implements SpeedChangeListen
                 webSocketService.disconnect();
             }
             webSocketService = new WebSocketService(this, url);
-            Toast.makeText(this, "DG-LAB APP 地址已更新", Toast.LENGTH_SHORT).show();
-            addLogEntry("DG-LAB APP 地址已保存并更新: " + url);
+            Toast.makeText(this, "局域网服务地址已更新", Toast.LENGTH_SHORT).show();
+            addLogEntry("局域网服务地址已保存并更新: " + url);
         } catch (Exception e) {
-            addLogEntry("更新 DG-LAB APP 地址失败: " + e.getMessage());
+            addLogEntry("更新局域网服务地址失败: " + e.getMessage());
             Log.e(TAG, "Error updating WebSocket service", e);
         }
     }
@@ -486,11 +482,19 @@ public class MainActivity extends AppCompatActivity implements SpeedChangeListen
             return stripTrailingSlash(value);
         }
 
+        if (value.matches("^\\d{2,5}$")) {
+            return "ws://0.0.0.0:" + value;
+        }
+
         if (value.startsWith("http://") || value.startsWith("https://")) {
             return "";
         }
 
-        return stripTrailingSlash(String.format(Locale.US, "ws://%s:%d", value, Constants.DG_LAB_APP_PORT));
+        if (value.contains(":")) {
+            return stripTrailingSlash("ws://" + value);
+        }
+
+        return stripTrailingSlash(String.format(Locale.US, "ws://%s:%d", value, Constants.DG_LAB_SOCKET_SERVER_PORT));
     }
 
     private String stripTrailingSlash(String value) {
@@ -561,53 +565,82 @@ public class MainActivity extends AppCompatActivity implements SpeedChangeListen
                     updateStatus("已连接");
                     connectButton.setEnabled(false);
                     disconnectButton.setEnabled(true);
-                    addLogEntry("成功连接到 DG-LAB APP，本地控制 API 已就绪");
+                    addLogEntry("本地控制服务已启动，请使用 DG-LAB APP 扫描二维码");
                 } else if ("closed".equals(responseData)) {
                     updateStatus("未连接");
                     connectButton.setEnabled(true);
                     disconnectButton.setEnabled(false);
+                    qrCodeImageView.setImageBitmap(null);
+                    qrHintTextView.setText(getString(R.string.qr_hint_idle));
                     addLogEntry("连接已断开");
                 }
-            } else if ("queryStrength".equals(responseType)) {
-                handleStrengthQueryResponse(responseData);
-            } else if ("setStrength".equals(responseType)) {
-                handleSetStrengthResponse(responseData);
+            } else if ("qrCode".equals(responseType)) {
+                renderQrCode(responseData);
+            } else if (Constants.MSG_TYPE_BIND.equals(responseType)) {
+                handleBindResponse(responseData);
+            } else if (Constants.MSG_TYPE_MESSAGE.equals(responseType)) {
+                handleForwardedAppMessage(responseData);
+            } else if (Constants.MSG_TYPE_BREAK.equals(responseType)) {
+                updateStatus("未连接");
+                disconnectButton.setEnabled(false);
+                qrHintTextView.setText(getString(R.string.qr_hint_idle));
+                addLogEntry("DG-LAB APP 已断开连接");
             } else {
                 addLogEntry("收到响应: " + responseType);
             }
         });
     }
 
-    private void handleStrengthQueryResponse(String responseData) {
+    private void handleBindResponse(String responseData) {
         Map<String, Object> parsed = new SocketProtocolHelper().parseJsonResponse(responseData);
         if (parsed == null) {
-            addLogEntry("强度查询响应解析失败");
+            addLogEntry("绑定响应解析失败");
             return;
         }
 
-        Object totalStrengthA = parsed.get("totalStrengthA");
-        Object totalStrengthB = parsed.get("totalStrengthB");
-        if (totalStrengthA instanceof Number && totalStrengthB instanceof Number) {
-            addLogEntry(String.format(Locale.US,
-                    "设备当前强度 A:%d B:%d",
-                    ((Number) totalStrengthA).intValue(),
-                    ((Number) totalStrengthB).intValue()));
+        Object message = parsed.get("message");
+        if (Constants.RESULT_SUCCESS.equals(message)) {
+            qrHintTextView.setText(getString(R.string.qr_hint_connected));
+            addLogEntry("DG-LAB APP 扫码配对成功");
+        } else {
+            addLogEntry("绑定失败: " + message);
         }
     }
 
-    private void handleSetStrengthResponse(String responseData) {
+    private void handleForwardedAppMessage(String responseData) {
         Map<String, Object> parsed = new SocketProtocolHelper().parseJsonResponse(responseData);
         if (parsed == null) {
-            addLogEntry("设置强度响应解析失败");
+            addLogEntry("APP 消息解析失败");
             return;
         }
 
-        Object code = parsed.get("code");
-        if (code instanceof Number && ((Number) code).intValue() == 0) {
-            addLogEntry("强度设置成功");
-        } else {
-            Object result = parsed.get("result");
-            addLogEntry("强度设置失败: " + (result != null ? result : responseData));
+        Object message = parsed.get("message");
+        if (message != null) {
+            addLogEntry("收到 APP 消息: " + message);
+        }
+    }
+
+    private void renderQrCode(String qrContent) {
+        if (qrContent == null || qrContent.isEmpty()) {
+            qrHintTextView.setText(getString(R.string.qr_hint_idle));
+            qrCodeImageView.setImageBitmap(null);
+            return;
+        }
+
+        try {
+            BitMatrix bitMatrix = new QRCodeWriter().encode(qrContent, BarcodeFormat.QR_CODE, 640, 640);
+            Bitmap bitmap = Bitmap.createBitmap(640, 640, Bitmap.Config.RGB_565);
+            for (int x = 0; x < 640; x++) {
+                for (int y = 0; y < 640; y++) {
+                    bitmap.setPixel(x, y, bitMatrix.get(x, y) ? 0xFF000000 : 0xFFFFFFFF);
+                }
+            }
+            qrCodeImageView.setImageBitmap(bitmap);
+            qrHintTextView.setText(getString(R.string.qr_hint_ready));
+            addLogEntry("已生成配对二维码: " + qrContent);
+        } catch (WriterException e) {
+            addLogEntry("生成二维码失败: " + e.getMessage());
+            Log.e(TAG, "QR generation failed", e);
         }
     }
 
@@ -619,7 +652,7 @@ public class MainActivity extends AppCompatActivity implements SpeedChangeListen
         runOnUiThread(() -> {
             addLogEntry("错误 [" + errorType + "]: " + errorMessage);
 
-            if ("connection".equals(errorType)) {
+            if ("connection".equals(errorType) || "server".equals(errorType)) {
                 updateStatus("连接失败");
                 connectButton.setEnabled(true);
                 disconnectButton.setEnabled(false);
@@ -722,21 +755,7 @@ public class MainActivity extends AppCompatActivity implements SpeedChangeListen
             if (result.getContents() == null) {
                 addLogEntry("扫描已取消");
             } else {
-                String qrContent = result.getContents();
-                addLogEntry("二维码内容: " + qrContent);
-
-                String normalizedEndpoint = normalizeWebSocketEndpoint(qrContent);
-                if (isValidWebSocketUrl(normalizedEndpoint)) {
-                    serverUrlEditText.setText(normalizedEndpoint);
-                    Toast.makeText(this, "已识别 DG-LAB APP 地址，点击“应用地址”保存", Toast.LENGTH_LONG).show();
-                    addLogEntry("识别到有效的 DG-LAB APP 地址: " + normalizedEndpoint);
-                } else if (qrContent.contains("DGLAB-SOCKET#")) {
-                    Toast.makeText(this, "这是给 DG-LAB APP 扫描的控制端二维码，当前应用不应扫描它", Toast.LENGTH_LONG).show();
-                    addLogEntry("检测到控制端配对二维码：应由 DG-LAB APP 扫描，而不是当前应用扫描");
-                } else {
-                    Toast.makeText(this, "二维码内容不是有效的 DG-LAB APP 地址", Toast.LENGTH_SHORT).show();
-                    addLogEntry("二维码内容无效: " + qrContent);
-                }
+                addLogEntry("已取消扫码；当前应用应生成二维码供 DG-LAB APP 扫描");
             }
         }
     }

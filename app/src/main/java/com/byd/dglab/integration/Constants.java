@@ -7,11 +7,14 @@ package com.byd.dglab.integration;
 public class Constants {
 
     // ==================== 网络配置 ====================
-    /** DG-LAB APP直连地址（请替换为手机实际IP） */
-    public static final String SOCKET_SERVER_URL = "ws://192.168.1.1:23301";
+    /** 本地控制服务默认地址 */
+    public static final String SOCKET_SERVER_URL = "ws://0.0.0.0:9999";
 
-    /** DG-LAB APP本地控制端口 */
-    public static final int DG_LAB_APP_PORT = 23301;
+    /** 本地控制服务默认端口 */
+    public static final int DG_LAB_SOCKET_SERVER_PORT = 9999;
+
+    /** 二维码前缀 */
+    public static final String QR_CODE_PREFIX = "https://www.dungeon-lab.com/app-download.php#DGLAB-SOCKET#";
 
     /** 连接超时时间（毫秒） */
     public static final int CONNECTION_TIMEOUT_MS = 10000;
@@ -70,23 +73,47 @@ public class Constants {
     public static final int[] HIGH_SPEED_FREQUENCY_RANGE = {80, 150};
 
     // ==================== 协议常量 ====================
-    /** 查询强度请求ID */
-    public static final int API_ID_QUERY_STRENGTH = 100001;
+    /** 消息类型：绑定 */
+    public static final String MSG_TYPE_BIND = "bind";
 
-    /** 静默查询强度请求ID */
-    public static final int API_ID_QUERY_STRENGTH_SILENT = 100000;
+    /** 消息类型：普通转发 */
+    public static final String MSG_TYPE_MESSAGE = "msg";
 
-    /** 设置强度请求ID */
-    public static final int API_ID_SET_STRENGTH = 100002;
+    /** 消息类型：断开 */
+    public static final String MSG_TYPE_BREAK = "break";
 
-    /** 强度查询方法名 */
-    public static final String API_METHOD_QUERY_STRENGTH = "queryStrength";
+    /** 消息类型：错误 */
+    public static final String MSG_TYPE_ERROR = "error";
 
-    /** 强度设置方法名 */
-    public static final String API_METHOD_SET_STRENGTH = "setStrength";
+    /** 消息类型：心跳 */
+    public static final String MSG_TYPE_HEARTBEAT = "heartbeat";
 
-    /** DG-LAB设备实际强度偏移 */
-    public static final int DG_LAB_STRENGTH_OFFSET = 9;
+    /** 绑定成功码 */
+    public static final String RESULT_SUCCESS = "200";
+
+    /** 对方断开码 */
+    public static final String RESULT_PEER_DISCONNECTED = "209";
+
+    /** 绑定失败码：已被占用 */
+    public static final String RESULT_ALREADY_BOUND = "400";
+
+    /** 绑定失败码：目标不存在 */
+    public static final String RESULT_TARGET_NOT_FOUND = "401";
+
+    /** 配对关系无效 */
+    public static final String RESULT_NOT_PAIRED = "402";
+
+    /** 非法消息 */
+    public static final String RESULT_INVALID_PAYLOAD = "403";
+
+    /** 目标离线 */
+    public static final String RESULT_NOT_FOUND = "404";
+
+    /** 缺少 channel */
+    public static final String RESULT_CHANNEL_REQUIRED = "406";
+
+    /** 服务器错误 */
+    public static final String RESULT_SERVER_ERROR = "500";
 
     /** 通道A标识 */
     public static final String CHANNEL_A = "A";

@@ -4,12 +4,13 @@ import android.util.Log;
 import com.google.gson.Gson;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonElement;
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.util.HashMap;
 import java.util.Map;
 
 /**
- * DG-LAB协议助手类
- * 负责生成与 DG-LAB APP 本地 WebSocket API 兼容的请求
+ * DG-LAB SOCKET 协议助手类
  */
 public class SocketProtocolHelper {
 
@@ -20,64 +21,86 @@ public class SocketProtocolHelper {
         this.gson = new Gson();
     }
 
-    /**
-     * 生成设置双通道强度命令
-     */
-    public String generateSetStrengthCommand(int strengthA, int strengthB) {
+    public String generateBindMessage(String clientId, String targetId, String message) {
         try {
-            JsonObject requestData = new JsonObject();
-            requestData.addProperty("strengthA", normalizeStrengthForDevice(strengthA));
-            requestData.addProperty("strengthB", normalizeStrengthForDevice(strengthB));
-
-            JsonObject request = new JsonObject();
-            request.addProperty("id", Constants.API_ID_SET_STRENGTH);
-            request.addProperty("method", Constants.API_METHOD_SET_STRENGTH);
-            request.add("data", requestData);
-
-            String jsonRequest = gson.toJson(request);
-            Log.d(TAG, "Generated setStrength command: " + jsonRequest);
-            return jsonRequest;
-
+            JsonObject payload = new JsonObject();
+            payload.addProperty("type", Constants.MSG_TYPE_BIND);
+            payload.addProperty("clientId", clientId);
+            payload.addProperty("targetId", targetId);
+            payload.addProperty("message", message);
+            return gson.toJson(payload);
         } catch (Exception e) {
-            Log.e(TAG, "Error generating setStrength command", e);
+            Log.e(TAG, "Error generating bind message", e);
             return null;
         }
     }
 
-    /**
-     * 生成查询强度命令
-     */
-    public String generateQueryStrengthCommand(boolean silent) {
+    public String generateErrorMessage(String clientId, String targetId, String code) {
         try {
-            JsonObject request = new JsonObject();
-            request.addProperty("id", silent
-                    ? Constants.API_ID_QUERY_STRENGTH_SILENT
-                    : Constants.API_ID_QUERY_STRENGTH);
-            request.addProperty("method", Constants.API_METHOD_QUERY_STRENGTH);
-
-            String jsonRequest = gson.toJson(request);
-            Log.d(TAG, "Generated queryStrength command: " + jsonRequest);
-            return jsonRequest;
-
+            JsonObject payload = new JsonObject();
+            payload.addProperty("type", Constants.MSG_TYPE_ERROR);
+            payload.addProperty("clientId", clientId);
+            payload.addProperty("targetId", targetId);
+            payload.addProperty("message", code);
+            return gson.toJson(payload);
         } catch (Exception e) {
-            Log.e(TAG, "Error generating queryStrength command", e);
+            Log.e(TAG, "Error generating error message", e);
             return null;
         }
     }
 
-    /**
-     * 将业务强度转换为 DG-LAB 设备强度
-     */
-    public int normalizeStrengthForDevice(int strength) {
-        int clamped = Math.max(Constants.INTENSITY_MIN, Math.min(Constants.INTENSITY_MAX, strength));
-        return clamped == 0 ? 0 : clamped + Constants.DG_LAB_STRENGTH_OFFSET;
+    public String generateBreakMessage(String clientId, String targetId) {
+        try {
+            JsonObject payload = new JsonObject();
+            payload.addProperty("type", Constants.MSG_TYPE_BREAK);
+            payload.addProperty("clientId", clientId);
+            payload.addProperty("targetId", targetId);
+            payload.addProperty("message", Constants.RESULT_PEER_DISCONNECTED);
+            return gson.toJson(payload);
+        } catch (Exception e) {
+            Log.e(TAG, "Error generating break message", e);
+            return null;
+        }
     }
 
-    /**
-     * 将 DG-LAB 设备强度转换为业务强度
-     */
-    public int normalizeStrengthFromDevice(int strength) {
-        return strength == 0 ? 0 : Math.max(0, strength - Constants.DG_LAB_STRENGTH_OFFSET);
+    public String generateStrengthMessage(String clientId, String targetId, int channel, int mode, int strength) {
+        try {
+            JsonObject payload = new JsonObject();
+            payload.addProperty("type", Constants.MSG_TYPE_MESSAGE);
+            payload.addProperty("clientId", clientId);
+            payload.addProperty("targetId", targetId);
+            payload.addProperty("message", String.format("strength-%d+%d+%d", channel, mode, strength));
+
+            String jsonPayload = gson.toJson(payload);
+            Log.d(TAG, "Generated strength message: " + jsonPayload);
+            return jsonPayload;
+        } catch (Exception e) {
+            Log.e(TAG, "Error generating strength message", e);
+            return null;
+        }
+    }
+
+    public String generateQrCodeContent(String websocketEndpoint, String clientId) {
+        return Constants.QR_CODE_PREFIX + websocketEndpoint + "/" + clientId;
+    }
+
+    public String extractClientIdFromQrContent(String qrContent) {
+        if (qrContent == null || !qrContent.startsWith(Constants.QR_CODE_PREFIX)) {
+            return null;
+        }
+
+        String wsPart = qrContent.substring(Constants.QR_CODE_PREFIX.length());
+        try {
+            URI uri = new URI(wsPart);
+            String path = uri.getPath();
+            if (path == null || path.length() <= 1) {
+                return null;
+            }
+            return path.substring(1);
+        } catch (URISyntaxException e) {
+            Log.e(TAG, "Error parsing QR content", e);
+            return null;
+        }
     }
 
     /**
@@ -219,11 +242,11 @@ public class SocketProtocolHelper {
                 result.put("data", data);
 
                 if (data.has("totalStrengthA")) {
-                    result.put("totalStrengthA", normalizeStrengthFromDevice(data.get("totalStrengthA").getAsInt()));
+                    result.put("totalStrengthA", data.get("totalStrengthA").getAsInt());
                 }
 
                 if (data.has("totalStrengthB")) {
-                    result.put("totalStrengthB", normalizeStrengthFromDevice(data.get("totalStrengthB").getAsInt()));
+                    result.put("totalStrengthB", data.get("totalStrengthB").getAsInt());
                 }
             } else if (response.has("data")) {
                 JsonElement data = response.get("data");

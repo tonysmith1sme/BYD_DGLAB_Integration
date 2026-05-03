@@ -3,14 +3,20 @@ package com.byd.dglab.integration;
 import android.os.Handler;
 import android.os.Looper;
 import android.util.Log;
-import org.java_websocket.client.WebSocketClient;
-import org.java_websocket.handshake.ServerHandshake;
+import org.java_websocket.WebSocket;
+import org.java_websocket.handshake.ClientHandshake;
+import org.java_websocket.server.WebSocketServer;
+import java.net.InetAddress;
+import java.net.InetSocketAddress;
+import java.net.NetworkInterface;
 import java.net.URI;
+import java.util.Collections;
 import java.util.Map;
+import java.util.UUID;
 
 /**
  * WebSocket服务
- * 负责与 DG-LAB APP 本地 WebSocket API 建立连接并发送控制命令
+ * 负责启动局域网控制端服务，并与 DG-LAB APP 完成扫码配对
  */
 public class WebSocketService {
 
@@ -21,12 +27,16 @@ public class WebSocketService {
     private final SocketProtocolHelper protocolHelper;
     private final String serverUrl;
 
-    private WebSocketClient webSocketClient;
+    private LocalControlServer localControlServer;
     private boolean isConnected = false;
     private int reconnectAttempts = 0;
     private boolean isReconnecting = false;
     private int lastStrengthA = Integer.MIN_VALUE;
     private int lastStrengthB = Integer.MIN_VALUE;
+    private String controllerClientId;
+    private String pairedTargetId;
+    private WebSocket pairedSocket;
+    private String qrCodeContent;
 
     public WebSocketService(ControlCommandListener listener) {
         this(listener, Constants.SOCKET_SERVER_URL);
@@ -40,72 +50,37 @@ public class WebSocketService {
     }
 
     /**
-    * 连接到 DG-LAB APP
+     * 启动本地控制服务
      */
     public void connect() {
         try {
             if (isConnected) {
-                Log.d(TAG, "Already connected");
+                Log.d(TAG, "Control server already running");
                 return;
             }
 
             URI serverUri = URI.create(serverUrl);
-            webSocketClient = new WebSocketClient(serverUri) {
+            controllerClientId = UUID.randomUUID().toString();
+            pairedTargetId = null;
+            pairedSocket = null;
+            qrCodeContent = protocolHelper.generateQrCodeContent(buildAdvertisedEndpoint(serverUri), controllerClientId);
 
-                @Override
-                public void onOpen(ServerHandshake handshakedata) {
-                    Log.d(TAG, "WebSocket connection opened");
-                    isConnected = true;
-                    reconnectAttempts = 0;
-                    isReconnecting = false;
-                    queryStrength(true);
+            localControlServer = new LocalControlServer(new InetSocketAddress(serverUri.getPort()));
+            localControlServer.start();
 
-                    // 通知监听器
-                    if (listener != null) {
-                        handler.post(() -> listener.onResponseReceived("connection", "opened"));
-                    }
-                }
+            isConnected = true;
+            reconnectAttempts = 0;
+            isReconnecting = false;
 
-                @Override
-                public void onMessage(String message) {
-                    Log.d(TAG, "Received message: " + message);
-                    handleIncomingMessage(message);
-                }
+            if (listener != null) {
+                final String qr = qrCodeContent;
+                handler.post(() -> {
+                    listener.onResponseReceived("connection", "opened");
+                    listener.onResponseReceived("qrCode", qr);
+                });
+            }
 
-                @Override
-                public void onClose(int code, String reason, boolean remote) {
-                    Log.d(TAG, "WebSocket connection closed: " + code + " - " + reason);
-                    isConnected = false;
-
-                    // 通知监听器
-                    if (listener != null) {
-                        handler.post(() -> listener.onResponseReceived("connection", "closed"));
-                    }
-
-                    lastStrengthA = Integer.MIN_VALUE;
-                    lastStrengthB = Integer.MIN_VALUE;
-
-                    // 自动重连
-                    if (!isReconnecting && reconnectAttempts < Constants.MAX_RECONNECT_ATTEMPTS) {
-                        scheduleReconnect();
-                    }
-                }
-
-                @Override
-                public void onError(Exception ex) {
-                    Log.e(TAG, "WebSocket error", ex);
-
-                    // 通知监听器
-                    if (listener != null) {
-                        handler.post(() -> listener.onError("websocket", ex.getMessage()));
-                    }
-                }
-            };
-
-            webSocketClient.setConnectionLostTimeout(60);
-            webSocketClient.connect();
-
-            Log.d(TAG, "Connecting to DG-LAB APP: " + serverUrl);
+            Log.d(TAG, "Local control server started: " + qrCodeContent);
 
         } catch (Exception e) {
             Log.e(TAG, "Error connecting to WebSocket", e);
@@ -120,16 +95,31 @@ public class WebSocketService {
      */
     public void disconnect() {
         try {
-            if (webSocketClient != null) {
-                webSocketClient.close();
-                webSocketClient = null;
+            if (pairedSocket != null && pairedSocket.isOpen() && controllerClientId != null && pairedTargetId != null) {
+                String breakMessage = protocolHelper.generateBreakMessage(controllerClientId, pairedTargetId);
+                if (breakMessage != null) {
+                    pairedSocket.send(breakMessage);
+                }
+                pairedSocket.close();
+            }
+            if (localControlServer != null) {
+                localControlServer.stop();
+                localControlServer = null;
             }
             isConnected = false;
             isReconnecting = false;
             lastStrengthA = Integer.MIN_VALUE;
             lastStrengthB = Integer.MIN_VALUE;
+            controllerClientId = null;
+            pairedTargetId = null;
+            pairedSocket = null;
+            qrCodeContent = null;
 
             Log.d(TAG, "WebSocket disconnected");
+
+            if (listener != null) {
+                handler.post(() -> listener.onResponseReceived("connection", "closed"));
+            }
 
         } catch (Exception e) {
             Log.e(TAG, "Error disconnecting WebSocket", e);
@@ -140,6 +130,13 @@ public class WebSocketService {
      * 发送双通道强度控制命令
      */
     public void sendStrengthCommand(int strengthA, int strengthB) {
+        if (pairedSocket == null || !pairedSocket.isOpen() || controllerClientId == null || pairedTargetId == null) {
+            if (listener != null) {
+                handler.post(() -> listener.onError("send", "DG-LAB APP 尚未扫码配对"));
+            }
+            return;
+        }
+
         int safeStrengthA = Math.max(Constants.INTENSITY_MIN, Math.min(Constants.INTENSITY_MAX, strengthA));
         int safeStrengthB = Math.max(Constants.INTENSITY_MIN, Math.min(Constants.INTENSITY_MAX, strengthB));
 
@@ -147,22 +144,18 @@ public class WebSocketService {
             return;
         }
 
-        String command = protocolHelper.generateSetStrengthCommand(safeStrengthA, safeStrengthB);
-        if (command != null) {
+        String commandA = protocolHelper.generateStrengthMessage(controllerClientId, pairedTargetId, 1, 2, safeStrengthA);
+        String commandB = protocolHelper.generateStrengthMessage(controllerClientId, pairedTargetId, 2, 2, safeStrengthB);
+        if (commandA != null && commandB != null) {
             lastStrengthA = safeStrengthA;
             lastStrengthB = safeStrengthB;
-            sendCommand("setStrength", command);
+            sendCommand("setStrengthA", commandA);
+            sendCommand("setStrengthB", commandB);
         }
     }
 
-    /**
-     * 查询当前强度
-     */
-    public void queryStrength(boolean silent) {
-        String command = protocolHelper.generateQueryStrengthCommand(silent);
-        if (command != null) {
-            sendCommand(silent ? "queryStrengthSilent" : "queryStrength", command);
-        }
+    public String getQrCodeContent() {
+        return qrCodeContent;
     }
 
     /**
@@ -172,7 +165,7 @@ public class WebSocketService {
      */
     private void sendCommand(String commandType, String commandData) {
         try {
-            if (!isConnected || webSocketClient == null) {
+            if (!isConnected || pairedSocket == null || !pairedSocket.isOpen()) {
                 Log.w(TAG, "Cannot send command: not connected");
                 if (listener != null) {
                     handler.post(() -> listener.onError("send", "Not connected"));
@@ -180,7 +173,7 @@ public class WebSocketService {
                 return;
             }
 
-            webSocketClient.send(commandData);
+            pairedSocket.send(commandData);
             Log.d(TAG, "Sent command: " + commandType + " - " + commandData);
 
             // 通知监听器
@@ -207,26 +200,10 @@ public class WebSocketService {
                 return;
             }
 
-            Object idObject = parsedResponse.get("id");
-            int responseId = idObject instanceof Number ? ((Number) idObject).intValue() : -1;
-
             if (listener != null) {
-                String responseType;
-                switch (responseId) {
-                    case Constants.API_ID_QUERY_STRENGTH:
-                    case Constants.API_ID_QUERY_STRENGTH_SILENT:
-                        responseType = "queryStrength";
-                        break;
-                    case Constants.API_ID_SET_STRENGTH:
-                        responseType = "setStrength";
-                        break;
-                    default:
-                        responseType = parsedResponse.containsKey("type")
-                                ? String.valueOf(parsedResponse.get("type"))
-                                : "api";
-                        break;
-                }
-
+                String responseType = parsedResponse.containsKey("type")
+                        ? String.valueOf(parsedResponse.get("type"))
+                        : "api";
                 handler.post(() -> listener.onResponseReceived(responseType, message));
             }
 
@@ -271,5 +248,121 @@ public class WebSocketService {
      */
     public int getReconnectAttempts() {
         return reconnectAttempts;
+    }
+
+    private String buildAdvertisedEndpoint(URI configuredUri) {
+        String host = configuredUri.getHost();
+        if (host == null || "0.0.0.0".equals(host) || "127.0.0.1".equals(host) || "localhost".equalsIgnoreCase(host)) {
+            host = findLocalIpv4Address();
+        }
+        return "ws://" + host + ":" + configuredUri.getPort();
+    }
+
+    private String findLocalIpv4Address() {
+        try {
+            for (NetworkInterface networkInterface : Collections.list(NetworkInterface.getNetworkInterfaces())) {
+                for (InetAddress inetAddress : Collections.list(networkInterface.getInetAddresses())) {
+                    if (!inetAddress.isLoopbackAddress() && inetAddress.getHostAddress().indexOf(':') < 0) {
+                        return inetAddress.getHostAddress();
+                    }
+                }
+            }
+        } catch (Exception e) {
+            Log.e(TAG, "Failed to get local IP", e);
+        }
+        return "127.0.0.1";
+    }
+
+    private class LocalControlServer extends WebSocketServer {
+        LocalControlServer(InetSocketAddress address) {
+            super(address);
+        }
+
+        @Override
+        public void onOpen(WebSocket conn, ClientHandshake handshake) {
+            String appClientId = UUID.randomUUID().toString();
+            conn.setAttachment(appClientId);
+            String bindMessage = protocolHelper.generateBindMessage(appClientId, "", "targetId");
+            if (bindMessage != null) {
+                conn.send(bindMessage);
+            }
+            Log.d(TAG, "App connected: " + appClientId + " path=" + handshake.getResourceDescriptor());
+        }
+
+        @Override
+        public void onClose(WebSocket conn, int code, String reason, boolean remote) {
+            if (conn == pairedSocket) {
+                pairedSocket = null;
+                pairedTargetId = null;
+                lastStrengthA = Integer.MIN_VALUE;
+                lastStrengthB = Integer.MIN_VALUE;
+                if (listener != null) {
+                    handler.post(() -> listener.onResponseReceived(Constants.MSG_TYPE_BREAK,
+                            protocolHelper.generateBreakMessage(controllerClientId != null ? controllerClientId : "", "")));
+                }
+            }
+        }
+
+        @Override
+        public void onMessage(WebSocket conn, String message) {
+            Log.d(TAG, "Received message: " + message);
+            Map<String, Object> parsed = protocolHelper.parseJsonResponse(message);
+            if (parsed == null) {
+                String error = protocolHelper.generateErrorMessage("", "", Constants.RESULT_INVALID_PAYLOAD);
+                if (error != null) {
+                    conn.send(error);
+                }
+                return;
+            }
+
+            String type = parsed.containsKey("type") ? String.valueOf(parsed.get("type")) : "";
+            String clientId = parsed.containsKey("clientId") ? String.valueOf(parsed.get("clientId")) : "";
+            String targetId = parsed.containsKey("targetId") ? String.valueOf(parsed.get("targetId")) : "";
+
+            if (Constants.MSG_TYPE_BIND.equals(type)) {
+                String attachedAppId = conn.getAttachment();
+                if (controllerClientId == null || !controllerClientId.equals(clientId) || !attachedAppId.equals(targetId)) {
+                    String error = protocolHelper.generateBindMessage(clientId, targetId, Constants.RESULT_TARGET_NOT_FOUND);
+                    if (error != null) {
+                        conn.send(error);
+                    }
+                    return;
+                }
+
+                if (pairedSocket != null && pairedSocket != conn) {
+                    String error = protocolHelper.generateBindMessage(clientId, targetId, Constants.RESULT_ALREADY_BOUND);
+                    if (error != null) {
+                        conn.send(error);
+                    }
+                    return;
+                }
+
+                pairedSocket = conn;
+                pairedTargetId = targetId;
+                String success = protocolHelper.generateBindMessage(controllerClientId, pairedTargetId, Constants.RESULT_SUCCESS);
+                if (success != null) {
+                    conn.send(success);
+                }
+                if (listener != null) {
+                    handler.post(() -> listener.onResponseReceived(Constants.MSG_TYPE_BIND, success));
+                }
+                return;
+            }
+
+            handleIncomingMessage(message);
+        }
+
+        @Override
+        public void onError(WebSocket conn, Exception ex) {
+            Log.e(TAG, "Server error", ex);
+            if (listener != null) {
+                handler.post(() -> listener.onError("server", ex.getMessage()));
+            }
+        }
+
+        @Override
+        public void onStart() {
+            Log.d(TAG, "Local server started");
+        }
     }
 }
