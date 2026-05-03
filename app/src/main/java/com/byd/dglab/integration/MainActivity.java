@@ -49,6 +49,7 @@ public class MainActivity extends AppCompatActivity implements SpeedChangeListen
     private TextView qrHintTextView;
     private ScrollView logScrollView;
     private android.widget.ImageView qrCodeImageView;
+    private EditText reportMultiplierEditText;
     private Button connectButton;
     private Button disconnectButton;
     private EditText serverUrlEditText;
@@ -72,6 +73,7 @@ public class MainActivity extends AppCompatActivity implements SpeedChangeListen
     private static final int BYD_PERMISSION_REQUEST_CODE = 102;
     private static final String PREFS_NAME = "WebSocketConfig";
     private static final String KEY_SERVER_URL = "server_url";
+    private static final String KEY_REPORT_MULTIPLIER = "report_multiplier";
     private static final String KEY_DISCLAIMER_SHOWN = "disclaimer_shown";
 
     // BYD车机权限列表 - 根据文档，只有这些类需要申请动态权限
@@ -211,6 +213,7 @@ public class MainActivity extends AppCompatActivity implements SpeedChangeListen
         applyUrlButton = findViewById(R.id.applyUrlButton);
         qrCodeImageView = findViewById(R.id.qrCodeImageView);
         qrHintTextView = findViewById(R.id.qrHintTextView);
+        reportMultiplierEditText = findViewById(R.id.reportMultiplierEditText);
         permissionCheckButton = findViewById(R.id.permissionCheckButton);
         dataSourceRadioGroup = findViewById(R.id.dataSourceRadioGroup);
         gpsOnlyRadio = findViewById(R.id.gpsOnlyRadio);
@@ -222,6 +225,9 @@ public class MainActivity extends AppCompatActivity implements SpeedChangeListen
         // 加载保存的WebSocket地址
         String savedUrl = sharedPreferences.getString(KEY_SERVER_URL, Constants.SOCKET_SERVER_URL);
         serverUrlEditText.setText(savedUrl);
+
+        float savedMultiplier = sharedPreferences.getFloat(KEY_REPORT_MULTIPLIER, 1.0f);
+        reportMultiplierEditText.setText(String.format(Locale.US, "%.1fx", savedMultiplier));
 
         // 设置按钮监听器
         connectButton.setOnClickListener(this::onConnectClicked);
@@ -448,6 +454,25 @@ public class MainActivity extends AppCompatActivity implements SpeedChangeListen
         }
     }
 
+    private float getReportMultiplier() {
+        try {
+            String raw = reportMultiplierEditText.getText().toString().trim().toLowerCase(Locale.US).replace("x", "");
+            if (raw.isEmpty()) {
+                return 1.0f;
+            }
+            float parsed = Float.parseFloat(raw);
+            return Math.max(0.1f, Math.min(10.0f, parsed));
+        } catch (Exception e) {
+            return 1.0f;
+        }
+    }
+
+    private void saveReportMultiplier(float multiplier) {
+        SharedPreferences.Editor editor = sharedPreferences.edit();
+        editor.putFloat(KEY_REPORT_MULTIPLIER, multiplier);
+        editor.apply();
+    }
+
     /**
      * 验证WebSocket地址格式
      */
@@ -527,19 +552,28 @@ public class MainActivity extends AppCompatActivity implements SpeedChangeListen
             int intensity = converter.convertSpeedToIntensity(speedKmH);
             int frequency = converter.convertSpeedToFrequency(speedKmH);
 
-            intensityTextView.setText(String.valueOf(intensity));
-            frequencyTextView.setText(String.valueOf(frequency));
+            float reportMultiplier = getReportMultiplier();
+            saveReportMultiplier(reportMultiplier);
+
+            int reportedIntensity = Math.max(Constants.INTENSITY_MIN,
+                    Math.min(Constants.INTENSITY_MAX, Math.round(intensity * reportMultiplier)));
+            int reportedFrequency = Math.max(Constants.FREQUENCY_MIN,
+                    Math.min(Constants.FREQUENCY_MAX, Math.round(frequency * reportMultiplier)));
+
+            intensityTextView.setText(String.valueOf(reportedIntensity));
+            frequencyTextView.setText(String.valueOf(reportedFrequency));
 
             // 发送控制命令（如果已连接）
             if (webSocketService.isConnected()) {
-                webSocketService.sendStrengthCommand(intensity, intensity);
+                webSocketService.sendStrengthCommand(reportedIntensity, reportedIntensity);
             }
 
             // 获取当前数据源
             String dataSource = speedDataService.isSpeedFromBYD() ? "BYD" : "GPS";
 
-            addLogEntry(String.format("车速更新: %.1f km/h (来自%s) -> 强度:%d, 频率:%d Hz",
-                    speedKmH, dataSource, intensity, frequency));
+                addLogEntry(String.format(Locale.US,
+                    "车速更新: %.1f km/h (来自%s) -> 强度:%d, 频率:%d Hz, 倍率:%.1fx",
+                    speedKmH, dataSource, reportedIntensity, reportedFrequency, reportMultiplier));
         });
     }
 

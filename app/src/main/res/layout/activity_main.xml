@@ -213,6 +213,24 @@
                                 </com.google.android.material.card.MaterialCardView>
                             </LinearLayout>
                         </LinearLayout>
+
+                        <com.google.android.material.textfield.TextInputLayout
+                            style="@style/Widget.Material3.TextInputLayout.OutlinedBox"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="16dp"
+                            android:hint="@string/report_multiplier_hint"
+                            app:startIconDrawable="@android:drawable/ic_menu_manage">
+
+                            <com.google.android.material.textfield.TextInputEditText
+                                android:id="@+id/reportMultiplierEditText"
+                                android:layout_width="match_parent"
+                                android:layout_height="wrap_content"
+                                android:inputType="numberDecimal"
+                                android:maxLines="1"
+                                android:text="1.0x"
+                                android:textAppearance="?attr/textAppearanceBodyLarge" />
+                        </com.google.android.material.textfield.TextInputLayout>
                     </LinearLayout>
                 </com.google.android.material.card.MaterialCardView>
 

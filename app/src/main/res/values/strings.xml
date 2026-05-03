@@ -4,6 +4,7 @@
     <string name="main_subtitle">车速采集、参数映射与设备联动</string>
     <string name="monitor_title">实时监控</string>
     <string name="monitor_subtitle">以 Material You 信息卡片展示当前车速与映射结果</string>
+    <string name="report_multiplier_hint">回报倍率，默认 1.0x</string>
     <string name="speed_unit">km/h</string>
     <string name="intensity_label">强度</string>
     <string name="frequency_unit">Hz</string>
