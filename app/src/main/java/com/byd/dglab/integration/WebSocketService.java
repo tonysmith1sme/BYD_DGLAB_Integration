@@ -337,20 +337,33 @@ public class WebSocketService {
                 String attachedAppId = session != null ? session.appClientId : null;
                 String requestedControllerId = session != null ? session.requestedControllerId : null;
 
-                boolean controllerIdMatches = requestedControllerId != null && requestedControllerId.equals(clientId);
                 boolean appIdMatches = attachedAppId != null && attachedAppId.equals(targetId);
+                boolean controllerIdMatches = controllerClientId != null && controllerClientId.equals(clientId);
+                boolean requestedIdMatches = requestedControllerId != null && requestedControllerId.equals(clientId);
+                boolean controllerMatches = controllerIdMatches || requestedIdMatches || controllerClientId == null;
 
-                if (!controllerIdMatches && controllerClientId != null) {
-                    controllerIdMatches = controllerClientId.equals(clientId);
-                }
+                Log.d(TAG, "Bind check. clientId=" + clientId
+                        + ", targetId=" + targetId
+                        + ", controllerClientId=" + controllerClientId
+                        + ", requestedControllerId=" + requestedControllerId
+                        + ", attachedAppId=" + attachedAppId
+                        + ", controllerMatches=" + controllerMatches
+                        + ", appIdMatches=" + appIdMatches);
 
-                if (!controllerIdMatches || !appIdMatches) {
+                if (!controllerMatches || !appIdMatches) {
+                    String reason = !appIdMatches ? Constants.RESULT_TARGET_NOT_FOUND : Constants.RESULT_NOT_PAIRED;
                     Log.w(TAG, "Bind rejected. clientId=" + clientId
                             + ", targetId=" + targetId
                             + ", requestedControllerId=" + requestedControllerId
                             + ", controllerClientId=" + controllerClientId
                             + ", attachedAppId=" + attachedAppId);
-                    String error = protocolHelper.generateBindMessage(clientId, targetId, Constants.RESULT_TARGET_NOT_FOUND);
+                    if (listener != null) {
+                        String finalReason = reason;
+                        handler.post(() -> listener.onResponseReceived("diagnostic",
+                                "bind rejected: clientId=" + clientId + ", targetId=" + targetId + ", reason=" + finalReason));
+                    }
+
+                    String error = protocolHelper.generateBindMessage("", "", reason);
                     if (error != null) {
                         conn.send(error);
                     }
@@ -372,7 +385,11 @@ public class WebSocketService {
                     conn.send(success);
                 }
                 if (listener != null) {
+                    String finalClientId = clientId;
+                    String finalTargetId = targetId;
                     handler.post(() -> listener.onResponseReceived(Constants.MSG_TYPE_BIND, success));
+                    handler.post(() -> listener.onResponseReceived("diagnostic",
+                            "bind accepted: clientId=" + finalClientId + ", targetId=" + finalTargetId));
                 }
                 return;
             }

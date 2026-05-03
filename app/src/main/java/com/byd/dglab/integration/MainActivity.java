@@ -580,6 +580,8 @@ public class MainActivity extends AppCompatActivity implements SpeedChangeListen
                 handleBindResponse(responseData);
             } else if (Constants.MSG_TYPE_MESSAGE.equals(responseType)) {
                 handleForwardedAppMessage(responseData);
+            } else if ("diagnostic".equals(responseType)) {
+                addLogEntry("诊断: " + responseData);
             } else if (Constants.MSG_TYPE_BREAK.equals(responseType)) {
                 updateStatus("未连接");
                 disconnectButton.setEnabled(false);
