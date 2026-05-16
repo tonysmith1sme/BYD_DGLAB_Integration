@@ -52,6 +52,7 @@ public class MainActivity extends AppCompatActivity implements SpeedChangeListen
     private ScrollView logScrollView;
     private android.widget.ImageView qrCodeImageView;
     private EditText reportMultiplierEditText;
+    private EditText waveformDurationEditText;
     private Spinner waveformSpinnerA;
     private Spinner waveformSpinnerB;
     private com.google.android.material.materialswitch.MaterialSwitch waveformThrottleSwitch;
@@ -80,6 +81,7 @@ public class MainActivity extends AppCompatActivity implements SpeedChangeListen
     private static final String PREFS_NAME = "WebSocketConfig";
     private static final String KEY_SERVER_URL = "server_url";
     private static final String KEY_REPORT_MULTIPLIER = "report_multiplier";
+    private static final String KEY_WAVEFORM_DURATION = "waveform_duration";
     private static final String KEY_WAVEFORM_PRESET_A = "waveform_preset_a";
     private static final String KEY_WAVEFORM_PRESET_B = "waveform_preset_b";
     private static final String KEY_WAVEFORM_THROTTLE_ENABLED = "waveform_throttle_enabled";
@@ -227,6 +229,7 @@ public class MainActivity extends AppCompatActivity implements SpeedChangeListen
         qrCodeImageView = findViewById(R.id.qrCodeImageView);
         qrHintTextView = findViewById(R.id.qrHintTextView);
         reportMultiplierEditText = findViewById(R.id.reportMultiplierEditText);
+        waveformDurationEditText = findViewById(R.id.waveformDurationEditText);
         waveformSpinnerA = findViewById(R.id.waveformSpinnerA);
         waveformSpinnerB = findViewById(R.id.waveformSpinnerB);
         waveformThrottleSwitch = findViewById(R.id.waveformThrottleSwitch);
@@ -245,6 +248,9 @@ public class MainActivity extends AppCompatActivity implements SpeedChangeListen
 
         float savedMultiplier = sharedPreferences.getFloat(KEY_REPORT_MULTIPLIER, 1.0f);
         reportMultiplierEditText.setText(String.format(Locale.US, "%.1fx", savedMultiplier));
+        int savedWaveformDuration = sharedPreferences.getInt(KEY_WAVEFORM_DURATION,
+            Constants.WAVEFORM_DURATION_DEFAULT_SECONDS);
+        waveformDurationEditText.setText(String.valueOf(savedWaveformDuration));
         initializeWaveformSpinners();
         boolean waveformThrottleEnabled = sharedPreferences.getBoolean(KEY_WAVEFORM_THROTTLE_ENABLED, true);
         waveformThrottleSwitch.setChecked(waveformThrottleEnabled);
@@ -561,6 +567,26 @@ public class MainActivity extends AppCompatActivity implements SpeedChangeListen
         editor.apply();
     }
 
+    private int getWaveformDurationSeconds() {
+        try {
+            String raw = waveformDurationEditText.getText().toString().trim();
+            if (raw.isEmpty()) {
+                return Constants.WAVEFORM_DURATION_DEFAULT_SECONDS;
+            }
+            int parsed = Integer.parseInt(raw);
+            return Math.max(Constants.WAVEFORM_DURATION_MIN_SECONDS,
+                    Math.min(Constants.WAVEFORM_DURATION_MAX_SECONDS, parsed));
+        } catch (Exception e) {
+            return Constants.WAVEFORM_DURATION_DEFAULT_SECONDS;
+        }
+    }
+
+    private void saveWaveformDurationSeconds(int durationSeconds) {
+        SharedPreferences.Editor editor = sharedPreferences.edit();
+        editor.putInt(KEY_WAVEFORM_DURATION, durationSeconds);
+        editor.apply();
+    }
+
     private boolean shouldSendWaveform(int reportedIntensity, String waveformA, String waveformB) {
         boolean throttleEnabled = waveformThrottleSwitch != null && waveformThrottleSwitch.isChecked();
         if (!throttleEnabled) {
@@ -663,11 +689,15 @@ public class MainActivity extends AppCompatActivity implements SpeedChangeListen
 
         String waveformA = getSelectedWaveformData(waveformSpinnerA);
         String waveformB = getSelectedWaveformData(waveformSpinnerB);
-        webSocketService.sendWaveformCommand(1, waveformA);
-        webSocketService.sendWaveformCommand(2, waveformB);
+        int waveformDurationSeconds = getWaveformDurationSeconds();
+        saveWaveformDurationSeconds(waveformDurationSeconds);
+        waveformDurationEditText.setText(String.valueOf(waveformDurationSeconds));
+        webSocketService.sendWaveformCommand(1, waveformA, waveformDurationSeconds);
+        webSocketService.sendWaveformCommand(2, waveformB, waveformDurationSeconds);
         markWaveformSent(lastWaveformIntensity == Integer.MIN_VALUE ? 0 : lastWaveformIntensity, waveformA, waveformB);
         addLogEntry("已手动测试当前波形: A=" + getSelectedWaveformName(waveformSpinnerA)
-                + ", B=" + getSelectedWaveformName(waveformSpinnerB));
+            + ", B=" + getSelectedWaveformName(waveformSpinnerB)
+            + ", 持续=" + waveformDurationSeconds + "s");
     }
 
     /**
@@ -685,6 +715,8 @@ public class MainActivity extends AppCompatActivity implements SpeedChangeListen
 
             float reportMultiplier = getReportMultiplier();
             saveReportMultiplier(reportMultiplier);
+                int waveformDurationSeconds = getWaveformDurationSeconds();
+                saveWaveformDurationSeconds(waveformDurationSeconds);
 
             int reportedIntensity = Math.max(Constants.INTENSITY_MIN,
                     Math.min(Constants.INTENSITY_MAX, Math.round(intensity * reportMultiplier)));
@@ -700,8 +732,8 @@ public class MainActivity extends AppCompatActivity implements SpeedChangeListen
                 String waveformA = getSelectedWaveformData(waveformSpinnerA);
                 String waveformB = getSelectedWaveformData(waveformSpinnerB);
                 if (shouldSendWaveform(reportedIntensity, waveformA, waveformB)) {
-                    webSocketService.sendWaveformCommand(1, waveformA);
-                    webSocketService.sendWaveformCommand(2, waveformB);
+                    webSocketService.sendWaveformCommand(1, waveformA, waveformDurationSeconds);
+                    webSocketService.sendWaveformCommand(2, waveformB, waveformDurationSeconds);
                     markWaveformSent(reportedIntensity, waveformA, waveformB);
                 }
             }
@@ -710,9 +742,9 @@ public class MainActivity extends AppCompatActivity implements SpeedChangeListen
             String dataSource = speedDataService.isSpeedFromBYD() ? "BYD" : "GPS";
 
                 addLogEntry(String.format(Locale.US,
-                        "车速更新: %.1f km/h (来自%s) -> 强度:%d, 频率:%d Hz, 倍率:%.1fx, 波形A:%s, 波形B:%s",
+                    "车速更新: %.1f km/h (来自%s) -> 强度:%d, 频率:%d Hz, 倍率:%.1fx, 波形A:%s, 波形B:%s, 波形时长:%ds",
                         speedKmH, dataSource, reportedIntensity, reportedFrequency, reportMultiplier,
-                        getSelectedWaveformName(waveformSpinnerA), getSelectedWaveformName(waveformSpinnerB)));
+                    getSelectedWaveformName(waveformSpinnerA), getSelectedWaveformName(waveformSpinnerB), waveformDurationSeconds));
         });
     }
 

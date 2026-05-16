@@ -40,7 +40,6 @@ public class WebSocketService {
     private String qrCodeContent;
     private final Map<String, Runnable> waveformTasks = new HashMap<>();
 
-    private static final int WAVEFORM_REPEAT_COUNT = 5;
     private static final long WAVEFORM_REPEAT_INTERVAL_MS = 1000L;
     private static final long WAVEFORM_CLEAR_DELAY_MS = 150L;
 
@@ -172,6 +171,10 @@ public class WebSocketService {
     }
 
     public void sendWaveformCommand(int channel, String waveformData) {
+        sendWaveformCommand(channel, waveformData, Constants.WAVEFORM_DURATION_DEFAULT_SECONDS);
+    }
+
+    public void sendWaveformCommand(int channel, String waveformData, int durationSeconds) {
         if (pairedSocket == null || !pairedSocket.isOpen() || controllerClientId == null || pairedTargetId == null) {
             if (listener != null) {
                 handler.post(() -> listener.onError("send", "DG-LAB APP 尚未扫码配对"));
@@ -183,7 +186,9 @@ public class WebSocketService {
             return;
         }
 
-        scheduleWaveform(channel, waveformData.trim());
+        int safeDurationSeconds = Math.max(Constants.WAVEFORM_DURATION_MIN_SECONDS,
+                Math.min(Constants.WAVEFORM_DURATION_MAX_SECONDS, durationSeconds));
+        scheduleWaveform(channel, waveformData.trim(), safeDurationSeconds);
     }
 
     public String getQrCodeContent() {
@@ -221,9 +226,10 @@ public class WebSocketService {
         }
     }
 
-    private void scheduleWaveform(int channel, String waveformData) {
+    private void scheduleWaveform(int channel, String waveformData, int durationSeconds) {
         final String channelName = channel == 1 ? "A" : "B";
         final String taskKey = "waveform-" + channelName;
+        final int repeatCount = Math.max(1, durationSeconds);
 
         Runnable existingTask = waveformTasks.remove(taskKey);
         if (existingTask != null) {
@@ -235,7 +241,7 @@ public class WebSocketService {
         }
 
         Runnable sendTask = new Runnable() {
-            private int remaining = WAVEFORM_REPEAT_COUNT;
+            private int remaining = repeatCount;
 
             @Override
             public void run() {

@@ -6,6 +6,7 @@
     <string name="monitor_subtitle">以 Material You 信息卡片展示当前车速与映射结果</string>
     <string name="report_multiplier_hint">回报倍率，默认 1.0x</string>
     <string name="waveform_selector_label">波形预设</string>
+    <string name="waveform_duration_hint">波形持续时间（秒），默认 5</string>
     <string name="waveform_selector_channel_a">A 通道</string>
     <string name="waveform_selector_channel_b">B 通道</string>
     <string name="waveform_option_a">波形A（呼吸）</string>

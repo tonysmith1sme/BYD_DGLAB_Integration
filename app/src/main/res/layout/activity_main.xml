@@ -240,6 +240,24 @@
                             android:textAppearance="?attr/textAppearanceTitleMedium"
                             android:textColor="?attr/colorOnSurface" />
 
+                        <com.google.android.material.textfield.TextInputLayout
+                            style="@style/Widget.Material3.TextInputLayout.OutlinedBox"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="12dp"
+                            android:hint="@string/waveform_duration_hint"
+                            app:startIconDrawable="@android:drawable/ic_menu_recent_history">
+
+                            <com.google.android.material.textfield.TextInputEditText
+                                android:id="@+id/waveformDurationEditText"
+                                android:layout_width="match_parent"
+                                android:layout_height="wrap_content"
+                                android:inputType="number"
+                                android:maxLines="1"
+                                android:text="5"
+                                android:textAppearance="?attr/textAppearanceBodyLarge" />
+                        </com.google.android.material.textfield.TextInputLayout>
+
                         <LinearLayout
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
