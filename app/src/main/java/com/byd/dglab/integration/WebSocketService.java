@@ -212,6 +212,7 @@ public class WebSocketService {
 
             pairedSocket.send(commandData);
             Log.d(TAG, "Sent command: " + commandType + " - " + commandData);
+            emitDiagnostic("sent " + commandType + ": " + commandData);
 
             // 通知监听器
             if (listener != null) {
@@ -230,6 +231,8 @@ public class WebSocketService {
         final String channelName = channel == 1 ? "A" : "B";
         final String taskKey = "waveform-" + channelName;
         final int repeatCount = Math.max(1, durationSeconds);
+
+        emitDiagnostic("schedule waveform channel=" + channelName + ", duration=" + durationSeconds + "s, repeats=" + repeatCount);
 
         Runnable existingTask = waveformTasks.remove(taskKey);
         if (existingTask != null) {
@@ -266,6 +269,12 @@ public class WebSocketService {
 
         waveformTasks.put(taskKey, sendTask);
         handler.postDelayed(sendTask, existingTask != null ? WAVEFORM_CLEAR_DELAY_MS : 0L);
+    }
+
+    private void emitDiagnostic(String diagnosticMessage) {
+        if (listener != null) {
+            handler.post(() -> listener.onResponseReceived("diagnostic", diagnosticMessage));
+        }
     }
 
     private void clearAllWaveformTasks() {

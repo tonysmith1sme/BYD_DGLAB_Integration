@@ -690,6 +690,13 @@ public class MainActivity extends AppCompatActivity implements SpeedChangeListen
         String waveformA = getSelectedWaveformData(waveformSpinnerA);
         String waveformB = getSelectedWaveformData(waveformSpinnerB);
         int waveformDurationSeconds = getWaveformDurationSeconds();
+        int currentIntensity = getDisplayedIntensity();
+        if (currentIntensity <= 0) {
+            currentIntensity = Constants.WAVEFORM_TEST_MIN_INTENSITY;
+            webSocketService.sendStrengthCommand(currentIntensity, currentIntensity);
+            intensityTextView.setText(String.valueOf(currentIntensity));
+            addLogEntry("当前强度为 0，已自动提升到测试强度: " + currentIntensity);
+        }
         saveWaveformDurationSeconds(waveformDurationSeconds);
         waveformDurationEditText.setText(String.valueOf(waveformDurationSeconds));
         webSocketService.sendWaveformCommand(1, waveformA, waveformDurationSeconds);
@@ -698,6 +705,14 @@ public class MainActivity extends AppCompatActivity implements SpeedChangeListen
         addLogEntry("已手动测试当前波形: A=" + getSelectedWaveformName(waveformSpinnerA)
             + ", B=" + getSelectedWaveformName(waveformSpinnerB)
             + ", 持续=" + waveformDurationSeconds + "s");
+    }
+
+    private int getDisplayedIntensity() {
+        try {
+            return Integer.parseInt(intensityTextView.getText().toString().trim());
+        } catch (Exception e) {
+            return 0;
+        }
     }
 
     /**
