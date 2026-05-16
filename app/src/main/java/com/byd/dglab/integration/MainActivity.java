@@ -13,6 +13,8 @@ import android.widget.TextView;
 import android.widget.EditText;
 import android.text.TextUtils;
 import android.widget.Toast;
+import android.widget.Spinner;
+import android.widget.ArrayAdapter;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.app.AlertDialog;
 import androidx.core.app.ActivityCompat;
@@ -50,6 +52,10 @@ public class MainActivity extends AppCompatActivity implements SpeedChangeListen
     private ScrollView logScrollView;
     private android.widget.ImageView qrCodeImageView;
     private EditText reportMultiplierEditText;
+    private Spinner waveformSpinnerA;
+    private Spinner waveformSpinnerB;
+    private com.google.android.material.materialswitch.MaterialSwitch waveformThrottleSwitch;
+    private Button testWaveformButton;
     private Button connectButton;
     private Button disconnectButton;
     private EditText serverUrlEditText;
@@ -74,6 +80,9 @@ public class MainActivity extends AppCompatActivity implements SpeedChangeListen
     private static final String PREFS_NAME = "WebSocketConfig";
     private static final String KEY_SERVER_URL = "server_url";
     private static final String KEY_REPORT_MULTIPLIER = "report_multiplier";
+    private static final String KEY_WAVEFORM_PRESET_A = "waveform_preset_a";
+    private static final String KEY_WAVEFORM_PRESET_B = "waveform_preset_b";
+    private static final String KEY_WAVEFORM_THROTTLE_ENABLED = "waveform_throttle_enabled";
     private static final String KEY_DISCLAIMER_SHOWN = "disclaimer_shown";
 
     // BYD车机权限列表 - 根据文档，只有这些类需要申请动态权限
@@ -88,6 +97,10 @@ public class MainActivity extends AppCompatActivity implements SpeedChangeListen
 
     // SharedPreferences
     private SharedPreferences sharedPreferences;
+    private long lastWaveformSentAt = 0L;
+    private int lastWaveformIntensity = Integer.MIN_VALUE;
+    private String lastWaveformA = null;
+    private String lastWaveformB = null;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -214,6 +227,10 @@ public class MainActivity extends AppCompatActivity implements SpeedChangeListen
         qrCodeImageView = findViewById(R.id.qrCodeImageView);
         qrHintTextView = findViewById(R.id.qrHintTextView);
         reportMultiplierEditText = findViewById(R.id.reportMultiplierEditText);
+        waveformSpinnerA = findViewById(R.id.waveformSpinnerA);
+        waveformSpinnerB = findViewById(R.id.waveformSpinnerB);
+        waveformThrottleSwitch = findViewById(R.id.waveformThrottleSwitch);
+        testWaveformButton = findViewById(R.id.testWaveformButton);
         permissionCheckButton = findViewById(R.id.permissionCheckButton);
         dataSourceRadioGroup = findViewById(R.id.dataSourceRadioGroup);
         gpsOnlyRadio = findViewById(R.id.gpsOnlyRadio);
@@ -228,6 +245,9 @@ public class MainActivity extends AppCompatActivity implements SpeedChangeListen
 
         float savedMultiplier = sharedPreferences.getFloat(KEY_REPORT_MULTIPLIER, 1.0f);
         reportMultiplierEditText.setText(String.format(Locale.US, "%.1fx", savedMultiplier));
+        initializeWaveformSpinners();
+        boolean waveformThrottleEnabled = sharedPreferences.getBoolean(KEY_WAVEFORM_THROTTLE_ENABLED, true);
+        waveformThrottleSwitch.setChecked(waveformThrottleEnabled);
 
         // 设置按钮监听器
         connectButton.setOnClickListener(this::onConnectClicked);
@@ -235,6 +255,7 @@ public class MainActivity extends AppCompatActivity implements SpeedChangeListen
         scanQrButton.setOnClickListener(this::onScanQrClicked);
         applyUrlButton.setOnClickListener(this::onApplyUrlClicked);
         permissionCheckButton.setOnClickListener(this::onPermissionCheckClicked);
+        testWaveformButton.setOnClickListener(this::onTestWaveformClicked);
 
         // 设置Root授权开关
         boolean rootGrantEnabled = sharedPreferences.getBoolean(Constants.PREF_ROOT_GRANT_ENABLED, false);
@@ -249,10 +270,77 @@ public class MainActivity extends AppCompatActivity implements SpeedChangeListen
             }
         });
 
+        waveformThrottleSwitch.setOnCheckedChangeListener((buttonView, isChecked) -> {
+            sharedPreferences.edit().putBoolean(KEY_WAVEFORM_THROTTLE_ENABLED, isChecked).apply();
+            lastWaveformSentAt = 0L;
+            lastWaveformIntensity = Integer.MIN_VALUE;
+            lastWaveformA = null;
+            lastWaveformB = null;
+            addLogEntry(isChecked ? "已开启降低波形发送频率" : "已关闭降低波形发送频率");
+        });
+
         // 初始状态
         updateStatus("未连接");
         disconnectButton.setEnabled(false);
         addLogEntry("应用启动");
+    }
+
+    private void initializeWaveformSpinners() {
+        String[] items = new String[]{
+                getString(R.string.waveform_option_a),
+                getString(R.string.waveform_option_b),
+                getString(R.string.waveform_option_c)
+        };
+        ArrayAdapter<String> adapter = new ArrayAdapter<>(this, android.R.layout.simple_spinner_item, items);
+        adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+        waveformSpinnerA.setAdapter(adapter);
+        waveformSpinnerB.setAdapter(new ArrayAdapter<>(this, android.R.layout.simple_spinner_item, items));
+        ((ArrayAdapter<?>) waveformSpinnerB.getAdapter()).setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+
+        bindWaveformSpinner(waveformSpinnerA, KEY_WAVEFORM_PRESET_A, items, getString(R.string.waveform_selector_channel_a));
+        bindWaveformSpinner(waveformSpinnerB, KEY_WAVEFORM_PRESET_B, items, getString(R.string.waveform_selector_channel_b));
+    }
+
+    private void bindWaveformSpinner(Spinner spinner, String preferenceKey, String[] items, String channelName) {
+        int savedIndex = sharedPreferences.getInt(preferenceKey, 0);
+        spinner.setSelection(Math.max(0, Math.min(items.length - 1, savedIndex)));
+        spinner.setOnItemSelectedListener(new android.widget.AdapterView.OnItemSelectedListener() {
+            @Override
+            public void onItemSelected(android.widget.AdapterView<?> parent, View view, int position, long id) {
+                sharedPreferences.edit().putInt(preferenceKey, position).apply();
+                addLogEntry(channelName + " 波形已切换: " + items[position]);
+            }
+
+            @Override
+            public void onNothingSelected(android.widget.AdapterView<?> parent) {
+            }
+        });
+    }
+
+    private String getSelectedWaveformData(Spinner spinner) {
+        int selected = spinner.getSelectedItemPosition();
+        switch (selected) {
+            case 1:
+                return Constants.WAVEFORM_B;
+            case 2:
+                return Constants.WAVEFORM_C;
+            case 0:
+            default:
+                return Constants.WAVEFORM_A;
+        }
+    }
+
+    private String getSelectedWaveformName(Spinner spinner) {
+        int selected = spinner.getSelectedItemPosition();
+        switch (selected) {
+            case 1:
+                return getString(R.string.waveform_option_b);
+            case 2:
+                return getString(R.string.waveform_option_c);
+            case 0:
+            default:
+                return getString(R.string.waveform_option_a);
+        }
     }
 
     /**
@@ -473,6 +561,33 @@ public class MainActivity extends AppCompatActivity implements SpeedChangeListen
         editor.apply();
     }
 
+    private boolean shouldSendWaveform(int reportedIntensity, String waveformA, String waveformB) {
+        boolean throttleEnabled = waveformThrottleSwitch != null && waveformThrottleSwitch.isChecked();
+        if (!throttleEnabled) {
+            return true;
+        }
+
+        long now = System.currentTimeMillis();
+        boolean waveformChanged = !safeEquals(lastWaveformA, waveformA) || !safeEquals(lastWaveformB, waveformB);
+        boolean intensityChangedEnough = lastWaveformIntensity == Integer.MIN_VALUE
+                || Math.abs(reportedIntensity - lastWaveformIntensity) >= Constants.WAVEFORM_THROTTLE_INTENSITY_DELTA;
+        boolean intervalElapsed = lastWaveformSentAt == 0L
+                || now - lastWaveformSentAt >= Constants.WAVEFORM_THROTTLE_INTERVAL_MS;
+
+        return waveformChanged || intensityChangedEnough || intervalElapsed;
+    }
+
+    private void markWaveformSent(int reportedIntensity, String waveformA, String waveformB) {
+        lastWaveformSentAt = System.currentTimeMillis();
+        lastWaveformIntensity = reportedIntensity;
+        lastWaveformA = waveformA;
+        lastWaveformB = waveformB;
+    }
+
+    private boolean safeEquals(String left, String right) {
+        return left == null ? right == null : left.equals(right);
+    }
+
     /**
      * 验证WebSocket地址格式
      */
@@ -539,6 +654,22 @@ public class MainActivity extends AppCompatActivity implements SpeedChangeListen
         addLogEntry("打开权限检查界面");
     }
 
+    private void onTestWaveformClicked(View view) {
+        if (!webSocketService.isConnected()) {
+            Toast.makeText(this, "请先启动服务并完成配对", Toast.LENGTH_SHORT).show();
+            addLogEntry("测试波形失败：DG-LAB APP 尚未连接");
+            return;
+        }
+
+        String waveformA = getSelectedWaveformData(waveformSpinnerA);
+        String waveformB = getSelectedWaveformData(waveformSpinnerB);
+        webSocketService.sendWaveformCommand(1, waveformA);
+        webSocketService.sendWaveformCommand(2, waveformB);
+        markWaveformSent(lastWaveformIntensity == Integer.MIN_VALUE ? 0 : lastWaveformIntensity, waveformA, waveformB);
+        addLogEntry("已手动测试当前波形: A=" + getSelectedWaveformName(waveformSpinnerA)
+                + ", B=" + getSelectedWaveformName(waveformSpinnerB));
+    }
+
     /**
      * 车速变化回调
      */
@@ -566,14 +697,22 @@ public class MainActivity extends AppCompatActivity implements SpeedChangeListen
             // 发送控制命令（如果已连接）
             if (webSocketService.isConnected()) {
                 webSocketService.sendStrengthCommand(reportedIntensity, reportedIntensity);
+                String waveformA = getSelectedWaveformData(waveformSpinnerA);
+                String waveformB = getSelectedWaveformData(waveformSpinnerB);
+                if (shouldSendWaveform(reportedIntensity, waveformA, waveformB)) {
+                    webSocketService.sendWaveformCommand(1, waveformA);
+                    webSocketService.sendWaveformCommand(2, waveformB);
+                    markWaveformSent(reportedIntensity, waveformA, waveformB);
+                }
             }
 
             // 获取当前数据源
             String dataSource = speedDataService.isSpeedFromBYD() ? "BYD" : "GPS";
 
                 addLogEntry(String.format(Locale.US,
-                    "车速更新: %.1f km/h (来自%s) -> 强度:%d, 频率:%d Hz, 倍率:%.1fx",
-                    speedKmH, dataSource, reportedIntensity, reportedFrequency, reportMultiplier));
+                        "车速更新: %.1f km/h (来自%s) -> 强度:%d, 频率:%d Hz, 倍率:%.1fx, 波形A:%s, 波形B:%s",
+                        speedKmH, dataSource, reportedIntensity, reportedFrequency, reportMultiplier,
+                        getSelectedWaveformName(waveformSpinnerA), getSelectedWaveformName(waveformSpinnerB)));
         });
     }
 

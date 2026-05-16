@@ -80,6 +80,44 @@ public class SocketProtocolHelper {
         }
     }
 
+    public String generatePulseMessage(String clientId, String targetId, int channel, String waveformData) {
+        return generatePulseMessage(clientId, targetId, channel == 1 ? "A" : "B", waveformData);
+    }
+
+    public String generatePulseMessage(String clientId, String targetId, String channel, String waveformData) {
+        try {
+            JsonObject payload = new JsonObject();
+            payload.addProperty("type", Constants.MSG_TYPE_MESSAGE);
+            payload.addProperty("clientId", clientId);
+            payload.addProperty("targetId", targetId);
+            payload.addProperty("message", String.format("pulse-%s:%s", channel, waveformData));
+
+            String jsonPayload = gson.toJson(payload);
+            Log.d(TAG, "Generated pulse message: " + jsonPayload);
+            return jsonPayload;
+        } catch (Exception e) {
+            Log.e(TAG, "Error generating pulse message", e);
+            return null;
+        }
+    }
+
+    public String generateClearMessage(String clientId, String targetId, int channel) {
+        try {
+            JsonObject payload = new JsonObject();
+            payload.addProperty("type", Constants.MSG_TYPE_MESSAGE);
+            payload.addProperty("clientId", clientId);
+            payload.addProperty("targetId", targetId);
+            payload.addProperty("message", String.format("clear-%d", channel));
+
+            String jsonPayload = gson.toJson(payload);
+            Log.d(TAG, "Generated clear message: " + jsonPayload);
+            return jsonPayload;
+        } catch (Exception e) {
+            Log.e(TAG, "Error generating clear message", e);
+            return null;
+        }
+    }
+
     public String generateQrCodeContent(String websocketEndpoint, String clientId) {
         return Constants.QR_CODE_PREFIX + websocketEndpoint + "/" + clientId;
     }

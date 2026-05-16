@@ -5,6 +5,15 @@
     <string name="monitor_title">实时监控</string>
     <string name="monitor_subtitle">以 Material You 信息卡片展示当前车速与映射结果</string>
     <string name="report_multiplier_hint">回报倍率，默认 1.0x</string>
+    <string name="waveform_selector_label">波形预设</string>
+    <string name="waveform_selector_channel_a">A 通道</string>
+    <string name="waveform_selector_channel_b">B 通道</string>
+    <string name="waveform_option_a">波形A（呼吸）</string>
+    <string name="waveform_option_b">波形B（潮汐）</string>
+    <string name="waveform_option_c">波形C（连击）</string>
+    <string name="waveform_throttle_title">降低波形发送频率</string>
+    <string name="waveform_throttle_summary">开启后仅在强度变化明显或间隔较久时重发波形</string>
+    <string name="test_waveform_action">立即测试当前波形</string>
     <string name="speed_unit">km/h</string>
     <string name="intensity_label">强度</string>
     <string name="frequency_unit">Hz</string>

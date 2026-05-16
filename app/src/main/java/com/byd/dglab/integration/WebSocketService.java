@@ -11,6 +11,7 @@ import java.net.InetSocketAddress;
 import java.net.NetworkInterface;
 import java.net.URI;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
 
@@ -37,6 +38,11 @@ public class WebSocketService {
     private String pairedTargetId;
     private WebSocket pairedSocket;
     private String qrCodeContent;
+    private final Map<String, Runnable> waveformTasks = new HashMap<>();
+
+    private static final int WAVEFORM_REPEAT_COUNT = 5;
+    private static final long WAVEFORM_REPEAT_INTERVAL_MS = 1000L;
+    private static final long WAVEFORM_CLEAR_DELAY_MS = 150L;
 
     private static class ClientSession {
         final String appClientId;
@@ -124,6 +130,7 @@ public class WebSocketService {
             pairedTargetId = null;
             pairedSocket = null;
             qrCodeContent = null;
+            clearAllWaveformTasks();
 
             Log.d(TAG, "WebSocket disconnected");
 
@@ -164,6 +171,21 @@ public class WebSocketService {
         }
     }
 
+    public void sendWaveformCommand(int channel, String waveformData) {
+        if (pairedSocket == null || !pairedSocket.isOpen() || controllerClientId == null || pairedTargetId == null) {
+            if (listener != null) {
+                handler.post(() -> listener.onError("send", "DG-LAB APP 尚未扫码配对"));
+            }
+            return;
+        }
+
+        if (waveformData == null || waveformData.trim().isEmpty()) {
+            return;
+        }
+
+        scheduleWaveform(channel, waveformData.trim());
+    }
+
     public String getQrCodeContent() {
         return qrCodeContent;
     }
@@ -197,6 +219,54 @@ public class WebSocketService {
                 handler.post(() -> listener.onError("send", e.getMessage()));
             }
         }
+    }
+
+    private void scheduleWaveform(int channel, String waveformData) {
+        final String channelName = channel == 1 ? "A" : "B";
+        final String taskKey = "waveform-" + channelName;
+
+        Runnable existingTask = waveformTasks.remove(taskKey);
+        if (existingTask != null) {
+            handler.removeCallbacks(existingTask);
+            String clearCommand = protocolHelper.generateClearMessage(controllerClientId, pairedTargetId, channel);
+            if (clearCommand != null) {
+                sendCommand("clearWaveform" + channelName, clearCommand);
+            }
+        }
+
+        Runnable sendTask = new Runnable() {
+            private int remaining = WAVEFORM_REPEAT_COUNT;
+
+            @Override
+            public void run() {
+                if (pairedSocket == null || !pairedSocket.isOpen() || controllerClientId == null || pairedTargetId == null) {
+                    waveformTasks.remove(taskKey);
+                    return;
+                }
+
+                String pulseCommand = protocolHelper.generatePulseMessage(controllerClientId, pairedTargetId, channelName, waveformData);
+                if (pulseCommand != null) {
+                    sendCommand("setWaveform" + channelName, pulseCommand);
+                }
+
+                remaining--;
+                if (remaining > 0) {
+                    handler.postDelayed(this, WAVEFORM_REPEAT_INTERVAL_MS);
+                } else {
+                    waveformTasks.remove(taskKey);
+                }
+            }
+        };
+
+        waveformTasks.put(taskKey, sendTask);
+        handler.postDelayed(sendTask, existingTask != null ? WAVEFORM_CLEAR_DELAY_MS : 0L);
+    }
+
+    private void clearAllWaveformTasks() {
+        for (Runnable task : waveformTasks.values()) {
+            handler.removeCallbacks(task);
+        }
+        waveformTasks.clear();
     }
 
     /**
@@ -308,6 +378,7 @@ public class WebSocketService {
         @Override
         public void onClose(WebSocket conn, int code, String reason, boolean remote) {
             if (conn == pairedSocket) {
+                clearAllWaveformTasks();
                 pairedSocket = null;
                 pairedTargetId = null;
                 lastStrengthA = Integer.MIN_VALUE;
