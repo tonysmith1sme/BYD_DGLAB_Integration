@@ -269,8 +269,15 @@ public class PermissionActivity extends AppCompatActivity {
             Log.w(TAG, "Shizuku 授权失败");
         }
         refreshPermissionStatus();
-        Shizuku.removeRequestPermissionResultListener(SHIZUKU_LISTENER);
+        removeShizukuListener();
     };
+
+    /**
+     * 移除 Shizuku 监听器
+     */
+    private void removeShizukuListener() {
+        Shizuku.removeRequestPermissionResultListener(SHIZUKU_LISTENER);
+    }
 
     /**
      * 处理权限请求结果

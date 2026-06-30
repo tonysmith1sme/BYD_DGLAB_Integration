@@ -31,6 +31,13 @@ android {
     kotlinOptions {
         jvmTarget = '1.8'
     }
+
+    // 使用 JDK 17 运行 Gradle（解决 androidJdkImage 转换失败）
+    java {
+        toolchain {
+            languageVersion.set(JavaLanguageVersion.of(17))
+        }
+    }
 }
 
 dependencies {
