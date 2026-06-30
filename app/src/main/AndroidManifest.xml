@@ -9,6 +9,9 @@
     <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
     <uses-permission android:name="android.permission.CAMERA" />
 
+    <!-- Shizuku 需要的跨用户交互权限 -->
+    <uses-permission android:name="android.permission.INTERACT_ACROSS_USERS_FULL" />
+
     <!-- BYD车机系统权限 - 静态声明（COMMON权限需要在代码中动态申请） -->
     <!-- 车身系统权限 -->
     <uses-permission android:name="android.permission.BYDAUTO_BODYWORK_COMMON" />
