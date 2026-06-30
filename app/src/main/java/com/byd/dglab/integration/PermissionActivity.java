@@ -16,6 +16,7 @@ import android.util.Log;
 import com.google.android.material.card.MaterialCardView;
 import com.google.android.material.color.DynamicColors;
 import com.google.android.material.color.MaterialColors;
+import rikka.shizuku.Shizuku;
 
 /**
  * 权限检查和授予活动
@@ -58,6 +59,9 @@ public class PermissionActivity extends AppCompatActivity {
         DynamicColors.applyToActivityIfAvailable(this);
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_permission);
+
+        // 初始化 Shizuku
+        ShizukuPermissionUtils.initialize(this);
 
         initializeUI();
         refreshPermissionStatus();
@@ -223,6 +227,15 @@ public class PermissionActivity extends AppCompatActivity {
      * 请求所有权限
      */
     private void requestAllPermissions() {
+        // 优先尝试 Shizuku 授权
+        if (ShizukuPermissionUtils.isShizukuAvailable() && !ShizukuPermissionUtils.isShizukuAuthorized()) {
+            Log.d(TAG, "尝试通过 Shizuku 请求权限");
+            Toast.makeText(this, "正在请求 Shizuku 授权，请在授权弹窗中允许", Toast.LENGTH_LONG).show();
+            Shizuku.addRequestPermissionResultListener(SHIZUKU_LISTENER);
+            Shizuku.requestPermission(0);
+            return;
+        }
+
         // 首先请求BYD权限
         String[] notGrantedBydPermissions = PermissionUtils.getNotGrantedPermissions(this, BYD_PERMISSIONS);
         if (notGrantedBydPermissions.length > 0) {
@@ -243,6 +256,21 @@ public class PermissionActivity extends AppCompatActivity {
         Toast.makeText(this, "所有权限都已授予", Toast.LENGTH_SHORT).show();
         Log.d(TAG, "所有权限已授予");
     }
+
+    /**
+     * Shizuku 权限请求结果监听器
+     */
+    private final Shizuku.OnRequestPermissionResultListener SHIZUKU_LISTENER = (requestCode, result) -> {
+        if (result == PackageManager.PERMISSION_GRANTED) {
+            Toast.makeText(this, "Shizuku 授权成功，现在可以通过 ADB 访问特权权限", Toast.LENGTH_LONG).show();
+            Log.d(TAG, "Shizuku 授权成功");
+        } else {
+            Toast.makeText(this, "Shizuku 授权失败，请确保已通过 adb 正确授权", Toast.LENGTH_LONG).show();
+            Log.w(TAG, "Shizuku 授权失败");
+        }
+        refreshPermissionStatus();
+        Shizuku.removeRequestPermissionResultListener(SHIZUKU_LISTENER);
+    };
 
     /**
      * 处理权限请求结果
