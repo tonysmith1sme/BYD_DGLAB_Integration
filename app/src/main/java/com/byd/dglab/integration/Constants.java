@@ -10,6 +10,9 @@ public class Constants {
     /** 本地控制服务默认地址 */
     public static final String SOCKET_SERVER_URL = "ws://0.0.0.0:9999";
 
+    /** 本地控制服务默认绑定地址 */
+    public static final String SOCKET_SERVER_BIND_HOST = "0.0.0.0";
+
     /** 本地控制服务默认端口 */
     public static final int DG_LAB_SOCKET_SERVER_PORT = 9999;
 

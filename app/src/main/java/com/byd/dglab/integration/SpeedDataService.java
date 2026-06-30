@@ -34,6 +34,7 @@ public class SpeedDataService implements LocationListener {
     // GPS相关
     private LocationManager locationManager;
     private boolean isGpsEnabled = false;
+    private boolean hasGpsFailureNotified = false;
 
     // BYD SDK相关
     // 取消下列注释以启用BYD SDK集成：
@@ -111,14 +112,17 @@ public class SpeedDataService implements LocationListener {
                         Log.d(TAG, "GPS location updates requested");
                     } else {
                         Log.w(TAG, "GPS provider not enabled");
+                        notifyGpsFailure("GPS 未开启，请在系统设置中启用定位服务");
                     }
                 } else {
                     Log.w(TAG, "GPS permission not granted");
+                    notifyGpsFailure("GPS 权限未授予，无法获取定位速度");
                 }
             }
 
         } catch (Exception e) {
             Log.e(TAG, "Error initializing GPS", e);
+            notifyGpsFailure("GPS 初始化失败: " + e.getMessage());
         }
     }
 
@@ -248,10 +252,13 @@ public class SpeedDataService implements LocationListener {
                 float speedMs = location.getSpeed();
                 double speedKmh = speedMs * 3.6;
                 handleSpeedUpdate(speedKmh, false);
+            } else {
+                notifyGpsFailure("当前位置未返回速度，正在等待 GPS 速度数据");
             }
 
         } catch (Exception e) {
             Log.e(TAG, "Error processing GPS location change", e);
+            notifyGpsFailure("GPS 定位数据处理失败: " + e.getMessage());
         }
     }
 
@@ -384,5 +391,16 @@ public class SpeedDataService implements LocationListener {
      */
     public boolean isGpsEnabled() {
         return isGpsEnabled;
+    }
+
+    private void notifyGpsFailure(String message) {
+        if (hasGpsFailureNotified) {
+            return;
+        }
+        hasGpsFailureNotified = true;
+        Log.w(TAG, message);
+        if (listener != null) {
+            handler.post(() -> listener.onSpeedError(message));
+        }
     }
 }

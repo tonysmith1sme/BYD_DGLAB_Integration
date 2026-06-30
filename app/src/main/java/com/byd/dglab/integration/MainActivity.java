@@ -473,7 +473,7 @@ public class MainActivity extends AppCompatActivity implements SpeedChangeListen
      */
     private void onConnectClicked(View view) {
         addLogEntry("正在启动本地控制服务...");
-        updateStatus("连接中...");
+        updateStatus(getString(R.string.status_connecting));
         connectButton.setEnabled(false);
 
         try {
@@ -489,7 +489,7 @@ public class MainActivity extends AppCompatActivity implements SpeedChangeListen
      */
     private void onDisconnectClicked(View view) {
         addLogEntry("断开连接...");
-        updateStatus("断开中...");
+        updateStatus(getString(R.string.status_disconnecting));
         disconnectButton.setEnabled(false);
 
         try {
@@ -649,7 +649,7 @@ public class MainActivity extends AppCompatActivity implements SpeedChangeListen
         }
 
         if (value.matches("^\\d{2,5}$")) {
-            return "ws://0.0.0.0:" + value;
+            return "ws://" + Constants.SOCKET_SERVER_BIND_HOST + ":" + value;
         }
 
         if (value.startsWith("http://") || value.startsWith("https://")) {
@@ -719,7 +719,7 @@ public class MainActivity extends AppCompatActivity implements SpeedChangeListen
      * 车速变化回调
      */
     @Override
-    public void onSpeedChanged(double speedKmH) {
+    public void onSpeedChanged(float speedKmH) {
         runOnUiThread(() -> {
             // 更新UI显示
             speedTextView.setText(String.format("%.1f", speedKmH));
@@ -763,6 +763,11 @@ public class MainActivity extends AppCompatActivity implements SpeedChangeListen
         });
     }
 
+    @Override
+    public void onSpeedError(String message) {
+        runOnUiThread(() -> addLogEntry("GPS 提示: " + message));
+    }
+
 
     /**
      * 命令发送回调
@@ -782,12 +787,12 @@ public class MainActivity extends AppCompatActivity implements SpeedChangeListen
         runOnUiThread(() -> {
             if ("connection".equals(responseType)) {
                 if ("opened".equals(responseData)) {
-                    updateStatus("已连接");
+                    updateStatus(getString(R.string.status_connected));
                     connectButton.setEnabled(false);
                     disconnectButton.setEnabled(true);
                     addLogEntry("本地控制服务已启动，请使用 DG-LAB APP 扫描二维码");
                 } else if ("closed".equals(responseData)) {
-                    updateStatus("未连接");
+                    updateStatus(getString(R.string.status_disconnected));
                     connectButton.setEnabled(true);
                     disconnectButton.setEnabled(false);
                     qrCodeImageView.setImageBitmap(null);
@@ -803,7 +808,7 @@ public class MainActivity extends AppCompatActivity implements SpeedChangeListen
             } else if ("diagnostic".equals(responseType)) {
                 addLogEntry("诊断: " + responseData);
             } else if (Constants.MSG_TYPE_BREAK.equals(responseType)) {
-                updateStatus("未连接");
+                updateStatus(getString(R.string.status_disconnected));
                 disconnectButton.setEnabled(false);
                 qrHintTextView.setText(getString(R.string.qr_hint_idle));
                 addLogEntry("DG-LAB APP 已断开连接");
@@ -858,11 +863,24 @@ public class MainActivity extends AppCompatActivity implements SpeedChangeListen
                 }
             }
             qrCodeImageView.setImageBitmap(bitmap);
-            qrHintTextView.setText(getString(R.string.qr_hint_ready));
+            qrHintTextView.setText(getString(R.string.qr_hint_ready, extractAdvertisedHost(qrContent)));
             addLogEntry("已生成配对二维码: " + qrContent);
         } catch (WriterException e) {
             addLogEntry("生成二维码失败: " + e.getMessage());
             Log.e(TAG, "QR generation failed", e);
+        }
+    }
+
+    private String extractAdvertisedHost(String qrContent) {
+        try {
+            if (qrContent == null || !qrContent.startsWith(Constants.QR_CODE_PREFIX)) {
+                return "";
+            }
+            String wsPart = qrContent.substring(Constants.QR_CODE_PREFIX.length());
+            URI uri = new URI(wsPart);
+            return uri.getHost() + ":" + uri.getPort();
+        } catch (Exception e) {
+            return "";
         }
     }
 
@@ -875,7 +893,7 @@ public class MainActivity extends AppCompatActivity implements SpeedChangeListen
             addLogEntry("错误 [" + errorType + "]: " + errorMessage);
 
             if ("connection".equals(errorType) || "server".equals(errorType)) {
-                updateStatus("连接失败");
+                updateStatus(getString(R.string.status_connection_failed));
                 connectButton.setEnabled(true);
                 disconnectButton.setEnabled(false);
             }

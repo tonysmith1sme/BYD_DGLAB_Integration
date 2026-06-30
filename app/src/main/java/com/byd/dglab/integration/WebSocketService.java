@@ -30,6 +30,7 @@ public class WebSocketService {
 
     private LocalControlServer localControlServer;
     private boolean isConnected = false;
+    private boolean isPaired = false;
     private int reconnectAttempts = 0;
     private boolean isReconnecting = false;
     private int lastStrengthA = Integer.MIN_VALUE;
@@ -78,6 +79,7 @@ public class WebSocketService {
             controllerClientId = UUID.randomUUID().toString();
             pairedTargetId = null;
             pairedSocket = null;
+            isPaired = false;
             qrCodeContent = protocolHelper.generateQrCodeContent(buildAdvertisedEndpoint(serverUri), controllerClientId);
 
             localControlServer = new LocalControlServer(new InetSocketAddress(serverUri.getPort()));
@@ -122,6 +124,7 @@ public class WebSocketService {
                 localControlServer = null;
             }
             isConnected = false;
+            isPaired = false;
             isReconnecting = false;
             lastStrengthA = Integer.MIN_VALUE;
             lastStrengthB = Integer.MIN_VALUE;
@@ -340,6 +343,10 @@ public class WebSocketService {
         return isConnected;
     }
 
+    public boolean isPaired() {
+        return isPaired;
+    }
+
     /**
      * 获取重连尝试次数
      * @return 重连次数
@@ -350,7 +357,7 @@ public class WebSocketService {
 
     private String buildAdvertisedEndpoint(URI configuredUri) {
         String host = configuredUri.getHost();
-        if (host == null || "0.0.0.0".equals(host) || "127.0.0.1".equals(host) || "localhost".equalsIgnoreCase(host)) {
+        if (host == null || Constants.SOCKET_SERVER_BIND_HOST.equals(host) || "127.0.0.1".equals(host) || "localhost".equalsIgnoreCase(host)) {
             host = findLocalIpv4Address();
         }
         return "ws://" + host + ":" + configuredUri.getPort();
@@ -396,6 +403,7 @@ public class WebSocketService {
                 clearAllWaveformTasks();
                 pairedSocket = null;
                 pairedTargetId = null;
+                isPaired = false;
                 lastStrengthA = Integer.MIN_VALUE;
                 lastStrengthB = Integer.MIN_VALUE;
                 if (listener != null) {
@@ -489,6 +497,7 @@ public class WebSocketService {
 
                 pairedSocket = conn;
                 pairedTargetId = targetId;
+                isPaired = true;
                 String success = protocolHelper.generateBindMessage(controllerClientId, pairedTargetId, Constants.RESULT_SUCCESS);
                 if (success != null) {
                     conn.send(success);
