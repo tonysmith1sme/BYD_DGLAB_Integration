@@ -59,6 +59,11 @@ dependencies {
     // 无需外部 JAR，通过系统包直接使用
     // 仅在 BYD 车机上可用，普通 Android 设备会自动使用 GPS 降级方案
     // 详见项目中的 BYD_API_集成指南.md 文件
+
+    // Shizuku - 通过合法 ADB 授权访问特权权限
+    def shizuku_version = '13.1.5'
+    implementation "dev.rikka.shizuku:api:$shizuku_version"
+    implementation "dev.rikka.shizuku:provider:$shizuku_version"
     
     testImplementation 'junit:junit:4.13.2'
     androidTestImplementation 'androidx.test.ext:junit:1.1.5'
