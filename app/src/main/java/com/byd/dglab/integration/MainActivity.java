@@ -473,7 +473,7 @@ public class MainActivity extends AppCompatActivity implements SpeedChangeListen
      */
     private void onConnectClicked(View view) {
         addLogEntry("正在启动本地控制服务...");
-        updateStatus(getString(R.string.status_connecting));
+        updateStatus(getString(R.string.status_service_starting));
         connectButton.setEnabled(false);
 
         try {
@@ -489,7 +489,7 @@ public class MainActivity extends AppCompatActivity implements SpeedChangeListen
      */
     private void onDisconnectClicked(View view) {
         addLogEntry("断开连接...");
-        updateStatus(getString(R.string.status_disconnecting));
+        updateStatus(getString(R.string.status_service_stopping));
         disconnectButton.setEnabled(false);
 
         try {
@@ -787,12 +787,12 @@ public class MainActivity extends AppCompatActivity implements SpeedChangeListen
         runOnUiThread(() -> {
             if ("connection".equals(responseType)) {
                 if ("opened".equals(responseData)) {
-                    updateStatus(getString(R.string.status_connected));
+                    updateStatus(getString(R.string.status_service_running));
                     connectButton.setEnabled(false);
                     disconnectButton.setEnabled(true);
                     addLogEntry("本地控制服务已启动，请使用 DG-LAB APP 扫描二维码");
                 } else if ("closed".equals(responseData)) {
-                    updateStatus(getString(R.string.status_disconnected));
+                    updateStatus(getString(R.string.status_service_stopped));
                     connectButton.setEnabled(true);
                     disconnectButton.setEnabled(false);
                     qrCodeImageView.setImageBitmap(null);
@@ -808,7 +808,7 @@ public class MainActivity extends AppCompatActivity implements SpeedChangeListen
             } else if ("diagnostic".equals(responseType)) {
                 addLogEntry("诊断: " + responseData);
             } else if (Constants.MSG_TYPE_BREAK.equals(responseType)) {
-                updateStatus(getString(R.string.status_disconnected));
+                updateStatus(getString(R.string.status_service_stopped));
                 disconnectButton.setEnabled(false);
                 qrHintTextView.setText(getString(R.string.qr_hint_idle));
                 addLogEntry("DG-LAB APP 已断开连接");
@@ -893,7 +893,7 @@ public class MainActivity extends AppCompatActivity implements SpeedChangeListen
             addLogEntry("错误 [" + errorType + "]: " + errorMessage);
 
             if ("connection".equals(errorType) || "server".equals(errorType)) {
-                updateStatus(getString(R.string.status_connection_failed));
+                updateStatus(getString(R.string.status_service_failed));
                 connectButton.setEnabled(true);
                 disconnectButton.setEnabled(false);
             }
@@ -909,11 +909,11 @@ public class MainActivity extends AppCompatActivity implements SpeedChangeListen
         int backgroundColor;
         int textColor;
 
-        if (getString(R.string.status_connected).equals(status)) {
+        if (getString(R.string.status_service_running).equals(status)) {
             backgroundColor = MaterialColors.getColor(statusTextView, com.google.android.material.R.attr.colorPrimaryContainer);
             textColor = MaterialColors.getColor(statusTextView, com.google.android.material.R.attr.colorOnPrimaryContainer);
-        } else if (getString(R.string.status_connecting).equals(status)
-                || getString(R.string.status_disconnecting).equals(status)) {
+        } else if (getString(R.string.status_service_starting).equals(status)
+                || getString(R.string.status_service_stopping).equals(status)) {
             backgroundColor = MaterialColors.getColor(statusTextView, com.google.android.material.R.attr.colorSecondaryContainer);
             textColor = MaterialColors.getColor(statusTextView, com.google.android.material.R.attr.colorOnSecondaryContainer);
         } else {
